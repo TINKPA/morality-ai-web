@@ -1,0 +1,25 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model SimulationRun {
+  id          Int       @id @default(autoincrement())
+  runId       String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  checkpoints Checkpoint[]
+}
+
+model Checkpoint {
+  id          Int           @id @default(autoincrement())
+  timeStep    Int
+  data        Json
+  createdAt   DateTime      @default(now())
+  simulation  SimulationRun @relation(fields: [simulationRunId], references: [id])
+  simulationRunId Int
+}
