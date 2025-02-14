@@ -18,6 +18,7 @@ model SimulationRun {
 model Checkpoint {
   id          Int           @id @default(autoincrement())
   timeStep    Int
+  agentStep   Int
   data        Json
   createdAt   DateTime      @default(now())
   simulation  SimulationRun @relation(fields: [simulationRunId], references: [id])

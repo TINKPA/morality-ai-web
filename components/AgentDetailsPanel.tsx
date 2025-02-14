@@ -1,5 +1,5 @@
 // components/AgentDetailsPanel.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export interface Agent {
   id: string;
@@ -36,124 +36,181 @@ export interface Agent {
 }
 
 interface AgentDetailsPanelProps {
-  agent?: Agent;
+  agents: Agent[];
+  selectedAgentId: string | null;
+  onSelectAgent: (id: string) => void;
 }
 
-const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({ agent }) => {
-  if (!agent) {
-    return <div className="p-4">No agent selected.</div>;
-  }
+const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
+  agents,
+  selectedAgentId,
+  onSelectAgent,
+}) => {
+  const [defaultSelectedAgentId, setDefaultSelectedAgentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (agents.length > 0 && !selectedAgentId) {
+      setDefaultSelectedAgentId(agents[0].id);
+      onSelectAgent(agents[0].id);
+    }
+  }, [agents, selectedAgentId, onSelectAgent]);
+
+  const selectedAgent = agents.find(
+    (agent) => agent.id === (selectedAgentId || defaultSelectedAgentId)
+  );
 
   return (
     <div className="p-4 border rounded shadow bg-white">
-      <h3 className="text-xl font-bold mb-2">Agent Details: {agent.id}</h3>
-
-      {/* Basic Information */}
-      <div className="mb-4">
-        <h4 className="text-lg font-semibold">Basic Information</h4>
-        <p><strong>ID:</strong> {agent.id}</p>
-        <p><strong>Type:</strong> {agent.type}</p>
-        <p><strong>Created at Step:</strong> {agent.created_at_step ?? 'N/A'}</p>
-      </div>
-
-      {/* State */}
-      <div className="mb-4">
-        <h4 className="text-lg font-semibold">State</h4>
-        <p><strong>HP:</strong> {agent.state.hp}</p>
-        <p><strong>Age:</strong> {agent.state.age}</p>
-        <p><strong>Food Stock:</strong> {agent.state.food_stock}</p>
-        <p>
-          <strong>Location:</strong> ({agent.state.location.x}, {agent.state.location.y})
-        </p>
-        <p><strong>Reputation:</strong> {agent.state.reputation.toFixed(2)}</p>
-        {agent.state.is_alive !== undefined && (
-          <p>
-            <strong>Alive:</strong> {agent.state.is_alive ? 'Yes' : 'No'}
-          </p>
-        )}
-      </div>
-
-      {/* Attributes */}
-      <div className="mb-4">
-        <h4 className="text-lg font-semibold">Attributes</h4>
-        {Object.entries(agent.attributes).map(([key, value]) => (
-          <p key={key}>
-            <strong>{key.charAt(0).toUpperCase() + key.slice(1)}:</strong> {value}
-          </p>
+      <h3 className="text-xl font-bold mb-2">Agent Details</h3>
+      <select
+        value={selectedAgentId || defaultSelectedAgentId || ''}
+        onChange={(e) => onSelectAgent(e.target.value)}
+        className="p-2 border rounded mb-4"
+      >
+        <option value="" disabled>
+          Select an agent
+        </option>
+        {agents.map((agent) => (
+          <option key={agent.id} value={agent.id}>
+            {agent.id}
+          </option>
         ))}
-      </div>
+      </select>
 
-      {/* Inventory */}
-      <div className="mb-4">
-        <h4 className="text-lg font-semibold">Inventory</h4>
-        {agent.inventory && agent.inventory.length > 0 ? (
-          agent.inventory.map((item, index) => (
-            <p key={index}>
-              <strong>Qty:</strong> {item.quantity} <strong>Type:</strong> {item.type} <strong>Phase:</strong> {item.phase}
+      {selectedAgent ? (
+        <div>
+          <h3 className="text-xl font-bold mb-2">Agent Details: {selectedAgent.id}</h3>
+
+          {/* Basic Information */}
+          <div className="mb-4">
+            <h4 className="text-lg font-semibold">Basic Information</h4>
+            <p>
+              <strong>ID:</strong> {selectedAgent.id}
             </p>
-          ))
-        ) : (
-          <p>Empty</p>
-        )}
-      </div>
-
-      {/* Memory */}
-      <div className="mb-4">
-        <h4 className="text-lg font-semibold">Memory</h4>
-        <p>
-          <strong>Long Term Memory:</strong> {agent.memory.long_term_memory || 'None'}
-        </p>
-        {agent.memory.beliefs && (
-          <div>
-            <strong>Beliefs:</strong>
-            <ul className="list-disc list-inside">
-              {agent.memory.beliefs.map((belief, index) => (
-                <li key={index}>{belief}</li>
-              ))}
-            </ul>
+            <p>
+              <strong>Type:</strong> {selectedAgent.type}
+            </p>
+            <p>
+              <strong>Created at Step:</strong> {selectedAgent.created_at_step ?? 'N/A'}
+            </p>
           </div>
-        )}
-        {agent.memory.received_messages && (
-          <div>
-            <strong>Recent Messages:</strong>
-            <ul className="list-disc list-inside">
-              {agent.memory.received_messages.map((msg, index) => (
-                <li key={index}>
-                  [{msg.from} → {msg.to}]: "{msg.content}"
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
 
-      {/* Recent Actions */}
-      <div>
-        <h4 className="text-lg font-semibold">Recent Actions</h4>
-        {agent.action_history && agent.action_history.length > 0 ? (
-          agent.action_history.map((action, index) => (
-            <div key={index} className="mb-2">
+          {/* State */}
+          <div className="mb-4">
+            <h4 className="text-lg font-semibold">State</h4>
+            <p>
+              <strong>HP:</strong> {selectedAgent.state.hp}
+            </p>
+            <p>
+              <strong>Age:</strong> {selectedAgent.state.age}
+            </p>
+            <p>
+              <strong>Food Stock:</strong> {selectedAgent.state.food_stock}
+            </p>
+            <p>
+              <strong>Location:</strong> ({selectedAgent.state.location.x},{' '}
+              {selectedAgent.state.location.y})
+            </p>
+            <p>
+              <strong>Reputation:</strong> {selectedAgent.state.reputation.toFixed(2)}
+            </p>
+            {selectedAgent.state.is_alive !== undefined && (
               <p>
-                <strong>Step {action.at_time_step}:</strong> {action.reasoning}
+                <strong>Alive:</strong> {selectedAgent.state.is_alive ? 'Yes' : 'No'}
               </p>
-              {action.actions && action.actions.length > 0 && (
+            )}
+          </div>
+
+          {/* Attributes */}
+          <div className="mb-4">
+            <h4 className="text-lg font-semibold">Attributes</h4>
+            {Object.entries(selectedAgent.attributes).map(([key, value]) => (
+              <p key={key}>
+                <strong>{key.charAt(0).toUpperCase() + key.slice(1)}:</strong> {value}
+              </p>
+            ))}
+          </div>
+
+          {/* Inventory */}
+          <div className="mb-4">
+            <h4 className="text-lg font-semibold">Inventory</h4>
+            {selectedAgent.inventory && selectedAgent.inventory.length > 0 ? (
+              selectedAgent.inventory.map((item, index) => (
+                <p key={index}>
+                  <strong>Qty:</strong> {item.quantity} <strong>Type:</strong> {item.type}{' '}
+                  <strong>Phase:</strong> {item.phase}
+                </p>
+              ))
+            ) : (
+              <p>Empty</p>
+            )}
+          </div>
+
+          {/* Memory */}
+          <div className="mb-4">
+            <h4 className="text-lg font-semibold">Memory</h4>
+            <p>
+              <strong>Long Term Memory:</strong> {selectedAgent.memory.long_term_memory || 'None'}
+            </p>
+            {selectedAgent.memory.beliefs && (
+              <div>
+                <strong>Beliefs:</strong>
                 <ul className="list-disc list-inside">
-                  {action.actions.map((act, i) => (
-                    <li key={i}>
-                      <strong>Action:</strong> {act.action_type}
-                      {act.target_location &&
-                        ` → (${act.target_location.x}, ${act.target_location.y})`}
-                      {act.reason && <div><strong>Reason:</strong> {act.reason}</div>}
+                  {selectedAgent.memory.beliefs.map((belief, index) => (
+                    <li key={index}>{belief}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {selectedAgent.memory.received_messages && (
+              <div>
+                <strong>Recent Messages:</strong>
+                <ul className="list-disc list-inside">
+                  {selectedAgent.memory.received_messages.map((msg, index) => (
+                    <li key={index}>
+                      [{msg.from} → {msg.to}]: "{msg.content}"
                     </li>
                   ))}
                 </ul>
-              )}
-            </div>
-          ))
-        ) : (
-          <p>No actions recorded.</p>
-        )}
-      </div>
+              </div>
+            )}
+          </div>
+
+          {/* Recent Actions */}
+          <div>
+            <h4 className="text-lg font-semibold">Recent Actions</h4>
+            {selectedAgent.action_history && selectedAgent.action_history.length > 0 ? (
+              selectedAgent.action_history.map((action, index) => (
+                <div key={index} className="mb-2">
+                  <p>
+                    <strong>Step {action.at_time_step}:</strong> {action.reasoning}
+                  </p>
+                  {action.actions && action.actions.length > 0 && (
+                    <ul className="list-disc list-inside">
+                      {action.actions.map((act, i) => (
+                        <li key={i}>
+                          <strong>Action:</strong> {act.action_type}
+                          {act.target_location &&
+                            ` → (${act.target_location.x}, ${act.target_location.y})`}
+                          {act.reason && (
+                            <div>
+                              <strong>Reason:</strong> {act.reason}
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p>No actions recorded.</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <p>No agent selected.</p>
+      )}
     </div>
   );
 };

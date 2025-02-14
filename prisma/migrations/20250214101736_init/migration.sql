@@ -12,6 +12,7 @@ CREATE TABLE "SimulationRun" (
 CREATE TABLE "Checkpoint" (
     "id" SERIAL NOT NULL,
     "timeStep" INTEGER NOT NULL,
+    "agentStep" INTEGER NOT NULL,
     "data" JSONB NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "simulationRunId" INTEGER NOT NULL,

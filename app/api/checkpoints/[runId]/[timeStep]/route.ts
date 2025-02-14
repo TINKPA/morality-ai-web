@@ -1,14 +1,13 @@
-import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-
+import { NextRequest, NextResponse } from 'next/server';
 const prisma = new PrismaClient();
 
 export async function GET(
-  request: Request,
-  context: { params: { runId: string; timeStep: string } }
+  request: NextRequest,
+  { params }: { params: { runId: string; timeStep: string } }
 ) {
   try {
-    const { runId, timeStep } = await context.params;
+    const { runId, timeStep } = await params;
 
     // Find the simulation run by runId
     const simulationRun = await prisma.simulationRun.findUnique({
@@ -23,8 +22,7 @@ export async function GET(
       );
     }
 
-    // Find the checkpoint corresponding to the provided timeStep
-    // (Assuming timeStep is stored in the Checkpoint model)
+    // Find the checkpoint corresponding to the provided timeStep.
     const checkpoint = simulationRun.checkpoints.find(
       (cp) => cp.timeStep === parseInt(timeStep)
     );
@@ -41,4 +39,4 @@ export async function GET(
     console.error('Error fetching checkpoint:', error);
     return NextResponse.error();
   }
-} 
+}

@@ -85,7 +85,7 @@ const TimelineControls: React.FC<TimelineControlsProps> = ({
         <button
           onClick={() => {
             handlePause();
-            onTimeStepChange(0);
+            onTimeStepChange(1);
           }}
           className="px-3 py-1 bg-gray-500 text-white rounded"
         >
@@ -99,13 +99,13 @@ const TimelineControls: React.FC<TimelineControlsProps> = ({
         <input
           id="timeScrubber"
           type="range"
-          min="0"
+          min="1"
           max={maxTimeStep}
           value={currentTimeStep}
           onChange={(e) => onTimeStepChange(Number(e.target.value))}
           className="w-full"
         />
-        <span className="ml-2">{currentTimeStep}</span>
+        <span className="ml-2">{currentTimeStep}/{maxTimeStep}</span>
       </div>
     </div>
   );

@@ -1,32 +1,96 @@
 // app/page.tsx
-'use client'
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import TimelineControls from '../components/TimelineControls';
-// ... other imports
+import SimulationGrid from '../components/SimulationGrid';
+import AgentDetailsPanel from '../components/AgentDetailsPanel';
+import MetricsPanel from '../components/MetricsPanel';
+import ConfigPanel from '../components/ConfigPanel';
+import { useQuery } from '@tanstack/react-query';
+import RunSelector from '../components/RunSelector';
 
 export default function Home() {
-  const maxTimeStep = 6;
-  const [currentTimeStep, setCurrentTimeStep] = useState(0);
+  const [maxTimeStep, setMaxTimeStep] = useState(99);
+  const [currentTimeStep, setCurrentTimeStep] = useState(1);
+  const [selectedRunId, setSelectedRunId] = useState<string>('');
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
-  // Handler to update the time step; can be extended to trigger API calls.
+  // Fetch checkpoint data via React Query
+  const {
+    data: checkpoint,
+    error,
+    isLoading,
+  } = useQuery({
+    queryKey: ['checkpoint', selectedRunId, currentTimeStep],
+    queryFn: async () => {
+      const response = await fetch(`/api/checkpoints/${selectedRunId}/${currentTimeStep}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch checkpoint data');
+      }
+      return response.json();
+    },
+    keepPreviousData: true,
+  });
+
   const handleTimeStepChange = (step: number | ((prev: number) => number)) => {
     if (typeof step === 'number') {
       setCurrentTimeStep(step);
     } else {
       setCurrentTimeStep((prev) => step(prev));
     }
-    // Here, you could also trigger fetching new checkpoint data.
   };
+  const agents = checkpoint?.data?.social_environment?.agents || [];
+
+  useEffect(() => {
+    setMaxTimeStep(checkpoint?.data?.metadata?.total_time_steps);
+  }, [checkpoint]);
 
   return (
     <main className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-4xl font-bold text-blue-600 mb-6">Morality-AI-Web</h1>
-      {/* Other components like SimulationGrid, Panels, etc. */}
-      <TimelineControls
-        currentTimeStep={currentTimeStep}
-        maxTimeStep={maxTimeStep}
-        onTimeStepChange={handleTimeStepChange}
-      />
+      {/* Header */}
+      <header className="mb-8">
+        <h1 className="text-4xl font-bold text-blue-600">Morality-AI-Web</h1>
+        {/* Run Selector UI */}
+        <RunSelector selectedRunId={selectedRunId} onSelect={setSelectedRunId} />
+      </header>
+
+      {/* Timeline Controls */}
+      <section className="mb-8">
+        <TimelineControls
+          currentTimeStep={currentTimeStep}
+          maxTimeStep={checkpoint?.data?.metadata?.total_time_steps || 99}
+          onTimeStepChange={handleTimeStepChange}
+        />
+      </section>
+
+      {/* Main Panels */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div>
+          <SimulationGrid checkpoint={checkpoint} />
+        </div>
+        <div>
+          <AgentDetailsPanel
+            agents={agents}
+            selectedAgentId={selectedAgentId}
+            onSelectAgent={setSelectedAgentId}
+          />
+        </div>
+      </section>
+
+      {/* Bottom Panels */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          {/* <MetricsPanel metrics={checkpoint?.statistics} /> */}
+        </div>
+        <div>
+          {/* <ConfigPanel config={checkpoint?.configuration} /> */}
+        </div>
+      </section>
+
+      {/* Loading and Error Messages */}
+      {isLoading && <p className="mt-4">Loading checkpoint data...</p>}
+      {error && <p className="mt-4 text-red-500">Error loading checkpoint data.</p>}
     </main>
   );
 }
