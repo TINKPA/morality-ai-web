@@ -50,7 +50,9 @@ export default function Home() {
     <main className="p-8 bg-gray-100 min-h-screen">
       {/* Header */}
       <header className="mb-8">
-        <h1 className="text-4xl font-bold text-blue-600">Morality-AI-Web</h1>
+        <h1 className="text-4xl font-bold text-blue-600 text-center fancy-font">
+          Morality-AI-Web
+        </h1>
         {/* Run Selector UI */}
         <RunSelector selectedRunId={selectedRunId} onSelect={setSelectedRunId} />
       </header>

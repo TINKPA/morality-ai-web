@@ -11,7 +11,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>Morality-AI-Web</title>
+        <title> Morality-AI-Web</title>
       </head>
       <body>
         <ClientProviders>{children}</ClientProviders>
