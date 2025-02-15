@@ -22,7 +22,7 @@ export interface Agent {
   memory: {
     long_term_memory?: string;
     beliefs?: string[];
-    received_messages?: Array<{ from: string; to: string; content: string }>;
+    received_messages?: [content: string];
   };
   action_history: Array<{
     at_time_step: number;
@@ -165,10 +165,13 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
             {selectedAgent.memory.received_messages && (
               <div>
                 <strong>Recent Messages:</strong>
+                {/* <div>
+                  selectedAgent.memory.received_messages
+                </div> */}
                 <ul className="list-disc list-inside">
                   {selectedAgent.memory.received_messages.map((msg, index) => (
                     <li key={index}>
-                      [{msg.from} → {msg.to}]: "{msg.content}"
+                      {msg}
                     </li>
                   ))}
                 </ul>
@@ -180,7 +183,7 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
           <div>
             <h4 className="text-lg font-semibold">Recent Actions</h4>
             {selectedAgent.action_history && selectedAgent.action_history.length > 0 ? (
-              selectedAgent.action_history.map((action, index) => (
+              selectedAgent.action_history.slice().reverse().map((action, index) => (
                 <div key={index} className="mb-2">
                   <p>
                     <strong>Step {action.at_time_step}:</strong> {action.reasoning}

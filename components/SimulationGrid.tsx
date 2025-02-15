@@ -41,7 +41,7 @@ const SimulationGrid: React.FC<SimulationGridProps> = ({ checkpoint }) => {
             {agentsAtCell.map((agent: any) => (
               <div key={agent.id} className="bg-blue-300 text-xs p-1 rounded mr-0.5">
                 {/* Display a short identifier from the agent's id */}
-                {agent.id.split('_')[0]}
+                {agent.id}
               </div>
             ))}
           </div>
