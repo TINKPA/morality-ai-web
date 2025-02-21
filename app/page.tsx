@@ -83,7 +83,7 @@ export default function Home() {
       {/* Bottom Panels */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          {/* <MetricsPanel metrics={checkpoint?.statistics} /> */}
+          <MetricsPanel metrics={checkpoint?.data?.statistics} />
         </div>
         <div>
           {/* <ConfigPanel config={checkpoint?.configuration} /> */}

@@ -1,5 +1,7 @@
-// components/AgentDetailsPanel.tsx
+'use client';
+
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 export interface Agent {
   id: string;
@@ -33,6 +35,13 @@ export interface Agent {
       reason?: string;
     }>;
   }>;
+  logs: {
+    prompts: {
+      system_prompt: string;
+      user_prompt: string;
+    };
+    response: string;
+  };
 }
 
 interface AgentDetailsPanelProps {
@@ -41,12 +50,59 @@ interface AgentDetailsPanelProps {
   onSelectAgent: (id: string) => void;
 }
 
+const PromptResponseSubWindow: React.FC<{
+  prompt: string;
+  response: string;
+  onClose: () => void;
+}> = ({ prompt, response, onClose }) => {
+  const [showPrompt, setShowPrompt] = useState(true);
+
+  return (
+    <div className="fixed inset-0 bg-gray-700 bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-4 rounded shadow-lg w-3/4 h-3/4 overflow-auto relative">
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-red-500 font-bold"
+        >
+          Close
+        </button>
+        <div>
+          <button
+            onClick={() => setShowPrompt(!showPrompt)}
+            className="mb-4 px-4 py-2 bg-blue-500 text-white rounded"
+          >
+            {showPrompt ? 'Show Response' : 'Show Prompt'}
+          </button>
+          {showPrompt ? (
+            <>
+              <h3 className="text-xl font-bold mb-2">Prompt</h3>
+              <div className="border p-2 rounded mb-4 overflow-auto">
+                <ReactMarkdown>{prompt || 'No prompt available.'}</ReactMarkdown>
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 className="text-xl font-bold mb-2">Response</h3>
+              <div className="border p-2 rounded overflow-auto">
+              <ReactMarkdown>{` \`\`\` json
+                ${JSON.stringify(JSON.parse(response), null, 4)}
+                \`\`\``}</ReactMarkdown>              
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
   agents,
   selectedAgentId,
   onSelectAgent,
 }) => {
   const [defaultSelectedAgentId, setDefaultSelectedAgentId] = useState<string | null>(null);
+  const [showSubWindow, setShowSubWindow] = useState(false);
 
   useEffect(() => {
     if (agents.length > 0 && !selectedAgentId) {
@@ -59,8 +115,15 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
     (agent) => agent.id === (selectedAgentId || defaultSelectedAgentId)
   );
 
+  const promptData = selectedAgent ? `${selectedAgent.logs.prompts.system_prompt}\n\n${
+     ` \`\`\` json
+      ${JSON.stringify(JSON.parse(selectedAgent.logs.prompts.user_prompt), null, 4)}
+      \`\`\``
+  }` : '';
+  const responseData = selectedAgent ? selectedAgent.logs.response : '';
+
   return (
-    <div className="p-4 border rounded shadow bg-white">
+    <div className="p-4 border rounded shadow bg-white relative">
       <h3 className="text-xl font-bold mb-2">Agent Details</h3>
       <select
         value={selectedAgentId || defaultSelectedAgentId || ''}
@@ -95,6 +158,18 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
             </p>
           </div>
 
+          {/* Button to open prompt/response sub window */}
+          {(promptData || responseData) && (
+            <div className="mt-4">
+              <button
+                onClick={() => setShowSubWindow(true)}
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+              >
+                Show Prompt &amp; Response
+              </button>
+            </div>
+          )}
+
           {/* State */}
           <div className="mb-4">
             <h4 className="text-lg font-semibold">State</h4>
@@ -108,8 +183,7 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
               <strong>Food Stock:</strong> {selectedAgent.state.food_stock}
             </p>
             <p>
-              <strong>Location:</strong> ({selectedAgent.state.location.x},{' '}
-              {selectedAgent.state.location.y})
+              <strong>Location:</strong> ({selectedAgent.state.location.x}, {selectedAgent.state.location.y})
             </p>
             <p>
               <strong>Reputation:</strong> {selectedAgent.state.reputation.toFixed(2)}
@@ -165,14 +239,9 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
             {selectedAgent.memory.received_messages && (
               <div>
                 <strong>Recent Messages:</strong>
-                {/* <div>
-                  selectedAgent.memory.received_messages
-                </div> */}
                 <ul className="list-disc list-inside">
                   {selectedAgent.memory.received_messages.map((msg, index) => (
-                    <li key={index}>
-                      {msg}
-                    </li>
+                    <li key={index}>{msg}</li>
                   ))}
                 </ul>
               </div>
@@ -210,9 +279,18 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
               <p>No actions recorded.</p>
             )}
           </div>
+
         </div>
       ) : (
         <p>No agent selected.</p>
+      )}
+
+      {showSubWindow && selectedAgent && (
+        <PromptResponseSubWindow
+          prompt={promptData}
+          response={responseData}
+          onClose={() => setShowSubWindow(false)}
+        />
       )}
     </div>
   );
