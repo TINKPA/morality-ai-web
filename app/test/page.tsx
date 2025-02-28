@@ -2,7 +2,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import AgentDetailsPanel, { Agent } from '../../components/AgentDetailsPanel';
+import AgentDetailsPanel from '../../components/AgentDetailsPanel';
+import { Agent } from '../../types/agent';
 
 const sampleAgents: Agent[] = [
   {
@@ -27,8 +28,13 @@ const sampleAgents: Agent[] = [
     action_history: [
       { at_time_step: 1, reasoning: 'Created agent', actions: [] }
     ],
-    promptData: '## Example Prompt\nSome **markdown** text for the prompt.',
-    responseData: '## Example Response\nSome **markdown** text for the response.'
+    logs: {
+      prompts: {
+        system_prompt: '## Example Prompt\nSome **markdown** text for the prompt.',
+        user_prompt: '{"key": "value"}'
+      },
+      response: '{"response": "Example response data"}'
+    }
   },
   {
     id: 'agent2',

@@ -122,7 +122,7 @@ export default function DashboardPage() {
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <h2 className="text-xl font-semibold text-gray-800 truncate">
-                  Run ID: {run.runId.substring(0, 8)}...
+                  Run ID: {run.runId}
                 </h2>
                 <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                   #{run.id}

@@ -6,53 +6,7 @@ import BasicInformation from './agent/BasicInformation';
 import AgentState from './agent/AgentState';
 import RecentActions from './agent/RecentActions';
 import PromptResponseSubWindow from './agent/PromptResponseSubWindow';
-
-export interface Agent {
-  id: string;
-  type: string;
-  created_at_step: number | null;
-  state: {
-    hp: number;
-    age: number;
-    food_stock: number;
-    location: { x: number; y: number };
-    reputation: number;
-    is_alive?: boolean;
-  };
-  attributes: { [key: string]: string | number };
-  inventory: Array<{
-    type: string;
-    quantity: number;
-    phase: string;
-  }>;
-  memory: {
-    long_term_memory?: string;
-    beliefs?: string[];
-    received_messages?: [content: string];
-  };
-  action_history: Array<{
-    at_time_step: number;
-    reasoning: string;
-    actions: Array<{
-      action_type: string;
-      target_location?: { x: number; y: number };
-      reason?: string;
-    }>;
-  }>;
-  logs: {
-    prompts: {
-      system_prompt: string;
-      user_prompt: string;
-    };
-    response: string;
-  };
-}
-
-interface AgentDetailsPanelProps {
-  agents: Agent[];
-  selectedAgentId: string | null;
-  onSelectAgent: (id: string) => void;
-}
+import { Agent, AgentDetailsPanelProps } from '../types/agent';
 
 const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
   agents,

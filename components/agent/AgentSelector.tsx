@@ -1,11 +1,5 @@
 import React from 'react';
-
-interface AgentSelectorProps {
-  agents: any[];
-  selectedAgentId: string | null;
-  defaultSelectedAgentId?: string | null;
-  onSelectAgent: (agentId: string) => void;
-}
+import { AgentSelectorProps } from '../../types/agent';
 
 const AgentSelector: React.FC<AgentSelectorProps> = ({
   agents,

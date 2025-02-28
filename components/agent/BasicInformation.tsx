@@ -1,8 +1,5 @@
 import React from 'react';
-
-interface BasicInformationProps {
-  agent: any;
-}
+import { BasicInformationProps } from '../../types/agent';
 
 const BasicInformation: React.FC<BasicInformationProps> = ({ agent }) => {
   return (

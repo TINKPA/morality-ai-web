@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-
-interface PromptResponseSubWindowProps {
-  prompt: string;
-  response: string;
-  onClose: () => void;
-}
+import { PromptResponseSubWindowProps } from '../../types/agent';
 
 const PromptResponseSubWindow: React.FC<PromptResponseSubWindowProps> = ({ 
   prompt, 

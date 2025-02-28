@@ -1,8 +1,5 @@
 import React from 'react';
-
-interface AgentStateProps {
-  state: any;
-}
+import { AgentStateProps } from '../../types/agent';
 
 const AgentState: React.FC<AgentStateProps> = ({ state }) => {
   if (!state) return <p>No state information available.</p>;

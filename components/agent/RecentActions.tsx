@@ -1,8 +1,5 @@
 import React from 'react';
-
-interface RecentActionsProps {
-  actionHistory: any[];
-}
+import { RecentActionsProps } from '../../types/agent';
 
 const RecentActions: React.FC<RecentActionsProps> = ({ actionHistory = [] }) => {
   if (!actionHistory.length) {
@@ -19,7 +16,7 @@ const RecentActions: React.FC<RecentActionsProps> = ({ actionHistory = [] }) => 
           </p>
           {action.actions && action.actions.length > 0 && (
             <ul className="list-disc list-inside">
-              {action.actions.map((act: any, i: number) => (
+              {action.actions.map((act, i) => (
                 <li key={i}>
                   <strong>Action:</strong> {act.action_type}
                   {act.target_location &&
