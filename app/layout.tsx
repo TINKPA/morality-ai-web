@@ -2,6 +2,7 @@
 import "./globals.css";
 import React from "react";
 import ClientProviders from "../components/ClientProviders";
+import Navbar from "../components/Navbar";
 
 export default function RootLayout({
   children,
@@ -10,8 +11,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <title>Morality-AI-Web</title>
+      </head>
       <body>
-        <ClientProviders>{children}</ClientProviders>
+        <ClientProviders>
+          <Navbar />
+          <main>
+            {children}
+          </main>
+        </ClientProviders>
       </body>
     </html>
   );

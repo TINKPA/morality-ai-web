@@ -260,7 +260,7 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
           <div>
             <h4 className="text-lg font-semibold">Recent Actions</h4>
             {selectedAgent.action_history && selectedAgent.action_history.length > 0 ? (
-              selectedAgent.action_history.slice().reverse().map((action, index) => (
+              selectedAgent.action_history.slice().reverse().slice(0, 3).map((action, index) => (
                 <div key={index} className="mb-2">
                   <p>
                     <strong>Step {action.at_time_step}:</strong> {action.reasoning}

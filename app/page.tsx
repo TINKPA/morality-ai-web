@@ -9,11 +9,15 @@ import MetricsPanel from '../components/MetricsPanel';
 import ConfigPanel from '../components/ConfigPanel';
 import { useQuery } from '@tanstack/react-query';
 import RunSelector from '../components/RunSelector';
+import { useSearchParams } from 'next/navigation';
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  const runIdFromUrl = searchParams.get('runId');
+  
   const [maxTimeStep, setMaxTimeStep] = useState(99);
   const [currentTimeStep, setCurrentTimeStep] = useState(1);
-  const [selectedRunId, setSelectedRunId] = useState<string>('');
+  const [selectedRunId, setSelectedRunId] = useState<string>(runIdFromUrl || '');
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
   // Fetch checkpoint data via React Query
@@ -46,6 +50,13 @@ export default function Home() {
     setMaxTimeStep(checkpoint?.data?.metadata?.total_time_steps);
   }, [checkpoint]);
 
+  // Update selectedRunId if the URL parameter changes
+  useEffect(() => {
+    if (runIdFromUrl) {
+      setSelectedRunId(runIdFromUrl);
+    }
+  }, [runIdFromUrl]);
+
   return (
     <main className="p-8 bg-gray-100 min-h-screen">
       {/* Header */}
@@ -58,7 +69,7 @@ export default function Home() {
       <section className="mb-8">
         <TimelineControls
           currentTimeStep={currentTimeStep}
-          maxTimeStep={checkpoint?.data?.metadata?.total_time_steps || 99}
+          maxTimeStep={checkpoint?.data?.metadata?.total_time_steps || maxTimeStep}
           onTimeStepChange={handleTimeStepChange}
         />
       </section>
