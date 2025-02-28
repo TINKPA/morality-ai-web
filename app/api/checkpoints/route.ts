@@ -1,4 +1,4 @@
- // app/api/checkpoints/route.ts
+// app/api/checkpoints/route.ts
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
@@ -6,8 +6,9 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    // Fetch all simulation runs sorted by createdAt descending
+    // Fetch all visible simulation runs sorted by createdAt descending
     const runs = await prisma.simulationRun.findMany({
+      where: { visible: true },
       orderBy: { createdAt: 'desc' },
     });
 

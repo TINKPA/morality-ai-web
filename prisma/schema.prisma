@@ -12,6 +12,7 @@ model SimulationRun {
   runId       String    @unique
   description String?
   createdAt   DateTime  @default(now())
+  visible     Boolean   @default(true)
   checkpoints Checkpoint[]
 }
 

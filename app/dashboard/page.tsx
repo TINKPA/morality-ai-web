@@ -31,21 +31,22 @@ export default function DashboardPage() {
 
   // Handle run deletion
   const handleDeleteRun = async (runId: string) => {
-    if (confirm('Are you sure you want to delete this simulation run? This action cannot be undone.')) {
+    // if (confirm('Are you sure you want to hide this simulation run? You won\'t see it in the dashboard anymore.')) {
+    if (true) {
       try {
         const response = await fetch(`/api/checkpoints/${runId}`, {
           method: 'DELETE',
         });
         
         if (!response.ok) {
-          throw new Error('Failed to delete simulation run');
+          throw new Error('Failed to hide simulation run');
         }
         
-        // Refetch the runs after successful deletion
+        // Refetch the runs after successful hiding
         refetch();
       } catch (error) {
-        console.error('Error deleting run:', error);
-        alert('Failed to delete simulation run. Please try again.');
+        console.error('Error hiding run:', error);
+        alert('Failed to hide simulation run. Please try again.');
       }
     }
   };

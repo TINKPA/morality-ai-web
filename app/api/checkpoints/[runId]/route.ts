@@ -7,12 +7,11 @@ export async function DELETE(
   { params }: { params: { runId: string } }
 ) {
   try {
-    const { runId } = params;
+    const { runId } = await params;
 
     // Find the simulation run by runId
     const simulationRun = await prisma.simulationRun.findUnique({
       where: { runId },
-      include: { checkpoints: true },
     });
 
     if (!simulationRun) {
@@ -22,21 +21,17 @@ export async function DELETE(
       );
     }
 
-    // Delete all associated checkpoints first
-    await prisma.checkpoint.deleteMany({
-      where: { simulationRunId: simulationRun.id },
-    });
-
-    // Then delete the simulation run
-    await prisma.simulationRun.delete({
+    // Update the run to set visible = false (soft delete)
+    const updatedRun = await prisma.simulationRun.update({
       where: { id: simulationRun.id },
+      data: { visible: false },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting simulation run:', error);
+    console.error('Error hiding simulation run:', error);
     return NextResponse.json(
-      { error: 'Failed to delete simulation run' },
+      { error: 'Failed to hide simulation run' },
       { status: 500 }
     );
   }
