@@ -1,7 +1,7 @@
 // app/page.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import TimelineControls from '../components/TimelineControls';
 import SimulationGrid from '../components/SimulationGrid';
 import AgentDetailsPanel from '../components/AgentDetailsPanel';
@@ -11,7 +11,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import RunSelector from '../components/RunSelector';
 import { useSearchParams } from 'next/navigation';
 
-export default function Home() {
+// Component that uses useSearchParams
+function HomeContent() {
   const searchParams = useSearchParams();
   const runIdFromUrl = searchParams.get('runId');
   const queryClient = useQueryClient();
@@ -75,6 +76,7 @@ export default function Home() {
       setCurrentTimeStep((prev) => step(prev));
     }
   };
+  
   const agents = checkpoint?.data?.social_environment?.agents || [];
 
   useEffect(() => {
@@ -133,5 +135,14 @@ export default function Home() {
       {isLoading && <p className="mt-4">Loading checkpoint data...</p>}
       {error && <p className="mt-4 text-red-500">Error loading checkpoint data.</p>}
     </main>
+  );
+}
+
+// Main component with Suspense boundary
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
