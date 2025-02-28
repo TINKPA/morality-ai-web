@@ -7,13 +7,14 @@ import SimulationGrid from '../components/SimulationGrid';
 import AgentDetailsPanel from '../components/AgentDetailsPanel';
 import MetricsPanel from '../components/MetricsPanel';
 import ConfigPanel from '../components/ConfigPanel';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import RunSelector from '../components/RunSelector';
 import { useSearchParams } from 'next/navigation';
 
 export default function Home() {
   const searchParams = useSearchParams();
   const runIdFromUrl = searchParams.get('runId');
+  const queryClient = useQueryClient();
   
   const [maxTimeStep, setMaxTimeStep] = useState(99);
   const [currentTimeStep, setCurrentTimeStep] = useState(1);
@@ -35,7 +36,37 @@ export default function Home() {
       return response.json();
     },
     keepPreviousData: true,
+    staleTime: 5 * 60 * 1000, // Keep data fresh for 5 minutes
   });
+
+  // Prefetch adjacent timesteps
+  useEffect(() => {
+    if (selectedRunId) {
+      // Prefetch next timestep if not at the end
+      if (currentTimeStep < maxTimeStep) {
+        queryClient.prefetchQuery({
+          queryKey: ['checkpoint', selectedRunId, currentTimeStep + 1],
+          queryFn: async () => {
+            const response = await fetch(`/api/checkpoints/${selectedRunId}/${currentTimeStep + 1}`);
+            if (!response.ok) throw new Error('Failed to prefetch next checkpoint');
+            return response.json();
+          },
+        });
+      }
+      
+      // Prefetch previous timestep if not at the beginning
+      if (currentTimeStep > 1) {
+        queryClient.prefetchQuery({
+          queryKey: ['checkpoint', selectedRunId, currentTimeStep - 1],
+          queryFn: async () => {
+            const response = await fetch(`/api/checkpoints/${selectedRunId}/${currentTimeStep - 1}`);
+            if (!response.ok) throw new Error('Failed to prefetch previous checkpoint');
+            return response.json();
+          },
+        });
+      }
+    }
+  }, [currentTimeStep, selectedRunId, maxTimeStep, queryClient]);
 
   const handleTimeStepChange = (step: number | ((prev: number) => number)) => {
     if (typeof step === 'number') {
