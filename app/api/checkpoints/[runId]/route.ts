@@ -35,4 +35,37 @@ export async function DELETE(
       { status: 500 }
     );
   }
+}
+
+export async function GET(
+  request: NextRequest,
+  context: { params: { runId: string } }
+) {
+  try {
+    // Await the params object before destructuring
+    const params = await context.params;
+    const { runId } = params;
+
+    // Find the simulation run by runId with all its checkpoints
+    const simulationRun = await prisma.simulationRun.findUnique({
+      where: { runId },
+      include: { checkpoints: true },
+    });
+
+    if (!simulationRun) {
+      return NextResponse.json(
+        { error: `Simulation run ${runId} not found` },
+        { status: 404 }
+      );
+    }
+
+    // Return all checkpoints for this run
+    return NextResponse.json(simulationRun.checkpoints);
+  } catch (error) {
+    console.error('Error fetching checkpoints:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch checkpoints' },
+      { status: 500 }
+    );
+  }
 } 

@@ -1,148 +1,83 @@
 // app/page.tsx
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
-import TimelineControls from '../components/TimelineControls';
-import SimulationGrid from '../components/SimulationGrid';
-import AgentDetailsPanel from '../components/AgentDetailsPanel';
-import MetricsPanel from '../components/MetricsPanel';
-import ConfigPanel from '../components/ConfigPanel';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import RunSelector from '../components/RunSelector';
-import { useSearchParams } from 'next/navigation';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import { SimulationRun } from '../components/RunSelector';
 
-// Component that uses useSearchParams
-function HomeContent() {
-  const searchParams = useSearchParams();
-  const runIdFromUrl = searchParams.get('runId');
-  const queryClient = useQueryClient();
-  
-  const [maxTimeStep, setMaxTimeStep] = useState(99);
-  const [currentTimeStep, setCurrentTimeStep] = useState(1);
-  const [selectedRunId, setSelectedRunId] = useState<string>(runIdFromUrl || '');
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-
-  // Fetch checkpoint data via React Query
-  const {
-    data: checkpoint,
-    error,
-    isLoading,
-  } = useQuery({
-    queryKey: ['checkpoint', selectedRunId, currentTimeStep],
+export default function HomePage() {
+  // Fetch all simulation runs
+  const { data: runs, error, isLoading } = useQuery<SimulationRun[], Error>({
+    queryKey: ['simulationRuns'],
     queryFn: async () => {
-      const response = await fetch(`/api/checkpoints/${selectedRunId}/${currentTimeStep}`);
+      const response = await fetch('/api/checkpoints');
       if (!response.ok) {
-        throw new Error('Failed to fetch checkpoint data');
+        throw new Error('Failed to fetch simulation runs');
       }
       return response.json();
     },
-    keepPreviousData: true,
-    staleTime: 5 * 60 * 1000, // Keep data fresh for 5 minutes
   });
 
-  // Prefetch adjacent timesteps
-  useEffect(() => {
-    if (selectedRunId) {
-      // Prefetch next timestep if not at the end
-      if (currentTimeStep < maxTimeStep) {
-        queryClient.prefetchQuery({
-          queryKey: ['checkpoint', selectedRunId, currentTimeStep + 1],
-          queryFn: async () => {
-            const response = await fetch(`/api/checkpoints/${selectedRunId}/${currentTimeStep + 1}`);
-            if (!response.ok) throw new Error('Failed to prefetch next checkpoint');
-            return response.json();
-          },
-        });
-      }
-      
-      // Prefetch previous timestep if not at the beginning
-      if (currentTimeStep > 1) {
-        queryClient.prefetchQuery({
-          queryKey: ['checkpoint', selectedRunId, currentTimeStep - 1],
-          queryFn: async () => {
-            const response = await fetch(`/api/checkpoints/${selectedRunId}/${currentTimeStep - 1}`);
-            if (!response.ok) throw new Error('Failed to prefetch previous checkpoint');
-            return response.json();
-          },
-        });
-      }
-    }
-  }, [currentTimeStep, selectedRunId, maxTimeStep, queryClient]);
-
-  const handleTimeStepChange = (step: number | ((prev: number) => number)) => {
-    if (typeof step === 'number') {
-      setCurrentTimeStep(step);
-    } else {
-      setCurrentTimeStep((prev) => step(prev));
-    }
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
   };
-  
-  const agents = checkpoint?.data?.social_environment?.agents || [];
-
-  useEffect(() => {
-    setMaxTimeStep(checkpoint?.data?.metadata?.total_time_steps);
-  }, [checkpoint]);
-
-  // Update selectedRunId if the URL parameter changes
-  useEffect(() => {
-    if (runIdFromUrl) {
-      setSelectedRunId(runIdFromUrl);
-    }
-  }, [runIdFromUrl]);
 
   return (
     <main className="p-8 bg-gray-100 min-h-screen">
-      {/* Header */}
       <header className="mb-8">
-        {/* Run Selector UI */}
-        <RunSelector selectedRunId={selectedRunId} onSelect={setSelectedRunId} />
+        <h1 className="text-4xl font-bold text-blue-600 text-center mb-4">
+          Simulation Explorer
+        </h1>
+        <p className="text-center text-gray-600 mb-8">
+          Select a simulation run to explore
+        </p>
       </header>
 
-      {/* Timeline Controls */}
-      <section className="mb-8">
-        <TimelineControls
-          currentTimeStep={currentTimeStep}
-          maxTimeStep={checkpoint?.data?.metadata?.total_time_steps || maxTimeStep}
-          onTimeStepChange={handleTimeStepChange}
-        />
-      </section>
+      {isLoading && (
+        <div className="flex justify-center">
+          <p className="text-lg">Loading simulation runs...</p>
+        </div>
+      )}
 
-      {/* Main Panels */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div>
-          <SimulationGrid checkpoint={checkpoint} />
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <p>Error loading simulation runs. Please try again later.</p>
         </div>
-        <div>
-          <AgentDetailsPanel
-            agents={agents}
-            selectedAgentId={selectedAgentId}
-            onSelectAgent={setSelectedAgentId}
-          />
-        </div>
-      </section>
+      )}
 
-      {/* Bottom Panels */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <MetricsPanel metrics={checkpoint?.data?.statistics} />
-        </div>
-        <div>
-          {/* <ConfigPanel config={checkpoint?.configuration} /> */}
-        </div>
-      </section>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {runs?.map((run) => (
+          <Link 
+            href={`/simulation/${run.runId}`} 
+            key={run.id}
+            className="block"
+          >
+            <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+              <h2 className="text-xl font-semibold mb-2">{run.runId}</h2>
+              {run.description && (
+                <p className="text-gray-700 mb-3">{run.description}</p>
+              )}
+              <p className="text-sm text-gray-500">
+                Created: {formatDate(run.createdAt)}
+              </p>
+              <div className="mt-4">
+                <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                  View Simulation
+                </span>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
 
-      {/* Loading and Error Messages */}
-      {isLoading && <p className="mt-4">Loading checkpoint data...</p>}
-      {error && <p className="mt-4 text-red-500">Error loading checkpoint data.</p>}
+      {runs?.length === 0 && (
+        <div className="text-center p-8">
+          <p className="text-lg text-gray-600">No simulation runs available.</p>
+        </div>
+      )}
     </main>
-  );
-}
-
-// Main component with Suspense boundary
-export default function Home() {
-  return (
-    <Suspense fallback={<div className="p-8">Loading...</div>}>
-      <HomeContent />
-    </Suspense>
   );
 }
