@@ -63,6 +63,146 @@ export default function SimulationPage() {
     }
   }, [checkpoints]);
 
+  // Get the current agents
+  const agents = checkpoint?.data?.social_environment?.agents || [];
+
+  // Add keyboard event listener for arrow key navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Left/Right arrows for timeline navigation
+      if (event.key === 'ArrowLeft') {
+        // Go to previous step if not at the beginning
+        if (currentTimeStep > 1) {
+          setCurrentTimeStep(prev => prev - 1);
+        }
+      } else if (event.key === 'ArrowRight') {
+        // Go to next step if not at the end
+        if (currentTimeStep < maxTimeStep) {
+          setCurrentTimeStep(prev => prev + 1);
+        }
+      } 
+      // Up/Down arrows for agent navigation
+      else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+        // Prevent default scrolling behavior
+        event.preventDefault();
+        
+        // Only navigate agents if there are agents to navigate
+        if (agents.length > 0) {
+          // If no agent is selected, select the first one
+          if (!selectedAgentId) {
+            // Find the first agent with valid logs
+            const validAgent = findValidAgent(agents);
+            if (validAgent) {
+              setSelectedAgentId(validAgent.id);
+              // On mobile, switch to agents tab
+              if (window.innerWidth < 1024) {
+                setActiveTab('agents');
+              }
+            }
+            return;
+          }
+
+          // Find the current agent index
+          const currentIndex = agents.findIndex(agent => agent.id === selectedAgentId);
+          
+          if (currentIndex !== -1) {
+            let newIndex;
+            let newAgent;
+            
+            if (event.key === 'ArrowUp') {
+              // Find previous valid agent
+              newAgent = findPreviousValidAgent(agents, currentIndex);
+            } else {
+              // Find next valid agent
+              newAgent = findNextValidAgent(agents, currentIndex);
+            }
+            
+            if (newAgent) {
+              setSelectedAgentId(newAgent.id);
+              
+              // On mobile, switch to agents tab
+              if (window.innerWidth < 1024) {
+                setActiveTab('agents');
+              }
+            }
+          }
+        }
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Clean up event listener on component unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentTimeStep, maxTimeStep, agents, selectedAgentId]);
+
+  // Helper function to check if an agent has valid logs
+  const isValidAgent = (agent: any) => {
+    return agent && 
+           agent.logs && 
+           agent.logs.prompts && 
+           agent.logs.prompts.system_prompt && 
+           agent.logs.prompts.user_prompt;
+  };
+
+  // Helper function to find a valid agent in the array
+  const findValidAgent = (agents: any[]) => {
+    return agents.find(agent => isValidAgent(agent));
+  };
+
+  // Helper function to find the next valid agent
+  const findNextValidAgent = (agents: any[], currentIndex: number) => {
+    // Try to find a valid agent after the current one
+    for (let i = currentIndex + 1; i < agents.length; i++) {
+      if (isValidAgent(agents[i])) {
+        return agents[i];
+      }
+    }
+    
+    // If not found, wrap around to the beginning
+    for (let i = 0; i < currentIndex; i++) {
+      if (isValidAgent(agents[i])) {
+        return agents[i];
+      }
+    }
+    
+    // If the current agent is valid, return it
+    if (isValidAgent(agents[currentIndex])) {
+      return agents[currentIndex];
+    }
+    
+    // If no valid agents found, return null
+    return null;
+  };
+
+  // Helper function to find the previous valid agent
+  const findPreviousValidAgent = (agents: any[], currentIndex: number) => {
+    // Try to find a valid agent before the current one
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      if (isValidAgent(agents[i])) {
+        return agents[i];
+      }
+    }
+    
+    // If not found, wrap around to the end
+    for (let i = agents.length - 1; i > currentIndex; i--) {
+      if (isValidAgent(agents[i])) {
+        return agents[i];
+      }
+    }
+    
+    // If the current agent is valid, return it
+    if (isValidAgent(agents[currentIndex])) {
+      return agents[currentIndex];
+    }
+    
+    // If no valid agents found, return null
+    return null;
+  };
+
   const handleTimeStepChange = (step: number | ((prev: number) => number)) => {
     if (typeof step === 'number') {
       setCurrentTimeStep(step);
@@ -70,33 +210,36 @@ export default function SimulationPage() {
       setCurrentTimeStep((prev) => step(prev));
     }
   };
-  
-  const agents = checkpoint?.data?.social_environment?.agents || [];
 
   return (
-    <main className="p-4 bg-gray-100 min-h-screen">
+    <main className="p-2 bg-gray-100 min-h-screen">
       {/* Fixed Header with Back Button and Timeline Controls */}
-      <header className="sticky top-0 z-10 bg-white shadow-md p-4 mb-4">
-        <div className="flex justify-between items-center mb-4">
-          <Link href="/" className="text-blue-600 hover:text-blue-800">
+      <header className="sticky top-0 z-10 bg-white shadow-sm mb-2">
+        <div className="flex items-center justify-between p-1">
+          <Link href="/" className="text-blue-600 hover:text-blue-800 text-sm">
             ← Back
           </Link>
-          <h1 className="text-xl font-bold">Simulation: {runId}</h1>
+          <h1 className="text-base font-bold truncate mx-2">Simulation: {runId}</h1>
         </div>
         
-        <TimelineControls
-          currentTimeStep={currentTimeStep}
-          maxTimeStep={maxTimeStep}
-          onTimeStepChange={handleTimeStepChange}
-        />
+        <div className="px-1 pb-1">
+          <TimelineControls
+            currentTimeStep={currentTimeStep}
+            maxTimeStep={maxTimeStep}
+            onTimeStepChange={handleTimeStepChange}
+          />
+          <div className="text-xs text-gray-500 text-center mt-0.5">
+            Use ← → keys to navigate steps | ↑ ↓ keys for agents
+          </div>
+        </div>
       </header>
 
       {/* Desktop Layout */}
-      <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4">
+      <div className="hidden lg:grid lg:grid-cols-3 lg:gap-2">
         {/* Left Column: Grid and Metrics */}
         <div className="lg:col-span-2">
           <SimulationGrid checkpoint={checkpoint} />
-          <div className="mt-4">
+          <div className="mt-2">
             <MetricsPanel metrics={metrics} checkpoint={checkpoint} agentHistory={agentHistory} />
           </div>
         </div>
@@ -108,7 +251,7 @@ export default function SimulationPage() {
             selectedAgentId={selectedAgentId}
             onSelectAgent={setSelectedAgentId}
           />
-          <div className="mt-4">
+          <div className="mt-2">
             {checkpoint?.data?.configuration && (
               <ConfigPanel config={checkpoint.data.configuration} />
             )}
@@ -118,9 +261,9 @@ export default function SimulationPage() {
 
       {/* Mobile Layout with Tabs */}
       <div className="block lg:hidden">
-        <div className="flex border-b mb-4">
+        <div className="flex border-b mb-2">
           <button 
-            className={`flex-1 px-4 py-2 text-center ${activeTab === 'grid' 
+            className={`flex-1 px-2 py-1 text-center text-sm ${activeTab === 'grid' 
               ? 'border-b-2 border-blue-500 text-blue-600 font-medium' 
               : 'text-gray-600'}`}
             onClick={() => setActiveTab('grid')}
@@ -128,7 +271,7 @@ export default function SimulationPage() {
             Grid
           </button>
           <button 
-            className={`flex-1 px-4 py-2 text-center ${activeTab === 'agents' 
+            className={`flex-1 px-2 py-1 text-center text-sm ${activeTab === 'agents' 
               ? 'border-b-2 border-blue-500 text-blue-600 font-medium' 
               : 'text-gray-600'}`}
             onClick={() => setActiveTab('agents')}
@@ -136,7 +279,7 @@ export default function SimulationPage() {
             Agents
           </button>
           <button 
-            className={`flex-1 px-4 py-2 text-center ${activeTab === 'metrics' 
+            className={`flex-1 px-2 py-1 text-center text-sm ${activeTab === 'metrics' 
               ? 'border-b-2 border-blue-500 text-blue-600 font-medium' 
               : 'text-gray-600'}`}
             onClick={() => setActiveTab('metrics')}
@@ -144,7 +287,7 @@ export default function SimulationPage() {
             Metrics
           </button>
           <button 
-            className={`flex-1 px-4 py-2 text-center ${activeTab === 'config' 
+            className={`flex-1 px-2 py-1 text-center text-sm ${activeTab === 'config' 
               ? 'border-b-2 border-blue-500 text-blue-600 font-medium' 
               : 'text-gray-600'}`}
             onClick={() => setActiveTab('config')}
@@ -153,7 +296,7 @@ export default function SimulationPage() {
           </button>
         </div>
         
-        <div className="mt-4">
+        <div className="mt-2">
           {activeTab === 'grid' && <SimulationGrid checkpoint={checkpoint} />}
           {activeTab === 'agents' && (
             <AgentDetailsPanel 
@@ -176,8 +319,8 @@ export default function SimulationPage() {
       </div>
 
       {/* Loading and Error Messages */}
-      {isLoading && <p className="mt-4">Loading checkpoint data...</p>}
-      {error && <p className="mt-4 text-red-500">Error loading checkpoint data.</p>}
+      {isLoading && <p className="mt-2 text-sm">Loading checkpoint data...</p>}
+      {error && <p className="mt-2 text-sm text-red-500">Error loading checkpoint data.</p>}
     </main>
   );
 } 
