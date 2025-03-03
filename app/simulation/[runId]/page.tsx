@@ -96,7 +96,7 @@ export default function SimulationPage() {
       {/* Bottom Panels */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <MetricsPanel metrics={checkpoint?.data?.statistics} />
+          <MetricsPanel metrics={checkpoint?.data} />
         </div>
         <div>
           {checkpoint?.data?.configuration && (

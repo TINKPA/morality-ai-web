@@ -27,11 +27,22 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
     (agent) => agent.id === (selectedAgentId || defaultSelectedAgentId)
   );
 
-  const promptData = selectedAgent ? `${selectedAgent.logs.prompts.system_prompt}\n\n${
-     ` \`\`\` json
-      ${JSON.stringify(JSON.parse(selectedAgent.logs.prompts.user_prompt), null, 4)}
-      \`\`\``
-  }` : '';
+  const formatUserPrompt = (prompt: string): string => {
+    try {
+      return JSON.stringify(JSON.parse(prompt), null, 4);
+    } catch (e) {
+      return prompt;
+    }
+  };
+
+  const promptData = selectedAgent 
+    ? `${selectedAgent.logs.prompts.system_prompt}\n\n${
+        ` \`\`\` json
+        ${formatUserPrompt(selectedAgent.logs.prompts.user_prompt)}
+        \`\`\``
+      }`
+    : '';
+    
   const responseData = selectedAgent ? selectedAgent.logs.response : '';
 
   return (
@@ -48,20 +59,19 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
       {selectedAgent ? (
         <div>
           <BasicInformation agent={selectedAgent} />
-
-          {/* Button to open prompt/response sub window */}
+          
+          <AgentState state={selectedAgent.state} />
+          
           {(promptData || responseData) && (
-            <div className="mt-4">
+            <div className="my-4">
               <button
                 onClick={() => setShowSubWindow(true)}
-                className="px-4 py-2 bg-blue-500 text-white rounded"
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
               >
                 Show Prompt &amp; Response
               </button>
             </div>
           )}
-
-          <AgentState state={selectedAgent.state} />
           
           <RecentActions actionHistory={selectedAgent.action_history} />
         </div>
