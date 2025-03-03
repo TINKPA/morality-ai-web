@@ -9,7 +9,7 @@ import AgentDetailsPanel from '../../../components/AgentDetailsPanel';
 import MetricsPanel from '../../../components/MetricsPanel';
 import ConfigPanel from '../../../components/ConfigPanel';
 import Link from 'next/link';
-import { calculateMetrics } from '../../../types/metrics';
+import { calculateMetrics, AgentHistoryPoint } from '../../../types/metrics';
 
 export default function SimulationPage() {
   const params = useParams();
@@ -43,6 +43,16 @@ export default function SimulationPage() {
   
   // Calculate metrics from checkpoint data
   const metrics = checkpoint ? calculateMetrics(checkpoint.data) : null;
+
+  // Generate agent history data from all checkpoints
+  const agentHistory = checkpoints?.map(cp => {
+    const cpMetrics = calculateMetrics(cp.data);
+    return {
+      timeStep: cp.timeStep,
+      moralAgents: cpMetrics?.moralAgents || 0,
+      nonMoralAgents: cpMetrics?.nonMoralAgents || 0
+    } as AgentHistoryPoint;
+  }).sort((a, b) => a.timeStep - b.timeStep);
 
   // Update maxTimeStep when checkpoints are loaded
   useEffect(() => {
@@ -100,7 +110,7 @@ export default function SimulationPage() {
       {/* Bottom Panels */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <MetricsPanel metrics={metrics} />
+          <MetricsPanel metrics={metrics} checkpoint={checkpoint} agentHistory={agentHistory} />
         </div>
         <div>
           {checkpoint?.data?.configuration && (
