@@ -5,14 +5,14 @@ import AgentStatsPanel from './metrics/panels/AgentStatsPanel';
 import HPStatsPanel from './metrics/panels/HPStatsPanel';
 import AgentEvolutionPanel from './metrics/panels/AgentEvolutionPanel';
 import ResourceStatsPanel from './metrics/panels/ResourceStatsPanel';
+import CollapsiblePanel from './ui/CollapsiblePanel';
 
 const MetricsPanel: React.FC<MetricsPanelProps> = ({ metrics, checkpoint, agentHistory }) => {
   if (!metrics) {
     return (
-      <div className="p-4 border rounded shadow bg-white">
-        <h3 className="text-xl font-bold mb-2">Simulation Metrics</h3>
+      <CollapsiblePanel title="Simulation Metrics">
         <p>No metrics available.</p>
-      </div>
+      </CollapsiblePanel>
     );
   }
 
@@ -20,17 +20,25 @@ const MetricsPanel: React.FC<MetricsPanelProps> = ({ metrics, checkpoint, agentH
   const resourceMetrics = checkpoint ? calculateResourceMetrics(checkpoint.data) : null;
 
   return (
-    <div className="p-4 border rounded shadow bg-white">
-      <h3 className="text-xl font-bold mb-2">Simulation Metrics</h3>
+    <div className="space-y-4">
+      <CollapsiblePanel title="Agent Statistics" defaultOpen={true}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <AgentStatsPanel metrics={metrics} />
+          <HPStatsPanel metrics={metrics} />
+        </div>
+      </CollapsiblePanel>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <AgentStatsPanel metrics={metrics} />
-        <HPStatsPanel metrics={metrics} />
-      </div>
+      {agentHistory && (
+        <CollapsiblePanel title="Agent Evolution" defaultOpen={false}>
+          <AgentEvolutionPanel agentHistory={agentHistory} />
+        </CollapsiblePanel>
+      )}
       
-      {agentHistory && <AgentEvolutionPanel agentHistory={agentHistory} />}
-      
-      {resourceMetrics && <ResourceStatsPanel resourceMetrics={resourceMetrics} />}
+      {resourceMetrics && (
+        <CollapsiblePanel title="Resource Statistics" defaultOpen={false}>
+          <ResourceStatsPanel resourceMetrics={resourceMetrics} />
+        </CollapsiblePanel>
+      )}
     </div>
   );
 };

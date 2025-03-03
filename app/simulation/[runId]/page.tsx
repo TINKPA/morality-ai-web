@@ -18,6 +18,7 @@ export default function SimulationPage() {
   const [maxTimeStep, setMaxTimeStep] = useState(99);
   const [currentTimeStep, setCurrentTimeStep] = useState(1);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('grid');
 
   // Fetch all checkpoints for the selected run
   const {
@@ -73,51 +74,106 @@ export default function SimulationPage() {
   const agents = checkpoint?.data?.social_environment?.agents || [];
 
   return (
-    <main className="p-8 bg-gray-100 min-h-screen">
-      {/* Header with Back Button */}
-      <header className="mb-8 flex justify-between items-center">
-        <Link href="/" className="text-blue-600 hover:text-blue-800">
-          ← Back to All Simulations
-        </Link>
-        <h1 className="text-2xl font-bold">
-          Simulation: {runId}
-        </h1>
-      </header>
-
-      {/* Timeline Controls */}
-      <section className="mb-8">
+    <main className="p-4 bg-gray-100 min-h-screen">
+      {/* Fixed Header with Back Button and Timeline Controls */}
+      <header className="sticky top-0 z-10 bg-white shadow-md p-4 mb-4">
+        <div className="flex justify-between items-center mb-4">
+          <Link href="/" className="text-blue-600 hover:text-blue-800">
+            ← Back
+          </Link>
+          <h1 className="text-xl font-bold">Simulation: {runId}</h1>
+        </div>
+        
         <TimelineControls
           currentTimeStep={currentTimeStep}
           maxTimeStep={maxTimeStep}
           onTimeStepChange={handleTimeStepChange}
         />
-      </section>
+      </header>
 
-      {/* Main Panels */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div>
+      {/* Desktop Layout */}
+      <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4">
+        {/* Left Column: Grid and Metrics */}
+        <div className="lg:col-span-2">
           <SimulationGrid checkpoint={checkpoint} />
+          <div className="mt-4">
+            <MetricsPanel metrics={metrics} checkpoint={checkpoint} agentHistory={agentHistory} />
+          </div>
         </div>
-        <div>
+        
+        {/* Right Column: Agent Details and Config */}
+        <div className="lg:col-span-1">
           <AgentDetailsPanel
             agents={agents}
             selectedAgentId={selectedAgentId}
             onSelectAgent={setSelectedAgentId}
           />
+          <div className="mt-4">
+            {checkpoint?.data?.configuration && (
+              <ConfigPanel config={checkpoint.data.configuration} />
+            )}
+          </div>
         </div>
-      </section>
+      </div>
 
-      {/* Bottom Panels */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <MetricsPanel metrics={metrics} checkpoint={checkpoint} agentHistory={agentHistory} />
+      {/* Mobile Layout with Tabs */}
+      <div className="block lg:hidden">
+        <div className="flex border-b mb-4">
+          <button 
+            className={`flex-1 px-4 py-2 text-center ${activeTab === 'grid' 
+              ? 'border-b-2 border-blue-500 text-blue-600 font-medium' 
+              : 'text-gray-600'}`}
+            onClick={() => setActiveTab('grid')}
+          >
+            Grid
+          </button>
+          <button 
+            className={`flex-1 px-4 py-2 text-center ${activeTab === 'agents' 
+              ? 'border-b-2 border-blue-500 text-blue-600 font-medium' 
+              : 'text-gray-600'}`}
+            onClick={() => setActiveTab('agents')}
+          >
+            Agents
+          </button>
+          <button 
+            className={`flex-1 px-4 py-2 text-center ${activeTab === 'metrics' 
+              ? 'border-b-2 border-blue-500 text-blue-600 font-medium' 
+              : 'text-gray-600'}`}
+            onClick={() => setActiveTab('metrics')}
+          >
+            Metrics
+          </button>
+          <button 
+            className={`flex-1 px-4 py-2 text-center ${activeTab === 'config' 
+              ? 'border-b-2 border-blue-500 text-blue-600 font-medium' 
+              : 'text-gray-600'}`}
+            onClick={() => setActiveTab('config')}
+          >
+            Config
+          </button>
         </div>
-        <div>
-          {checkpoint?.data?.configuration && (
+        
+        <div className="mt-4">
+          {activeTab === 'grid' && <SimulationGrid checkpoint={checkpoint} />}
+          {activeTab === 'agents' && (
+            <AgentDetailsPanel 
+              agents={agents} 
+              selectedAgentId={selectedAgentId} 
+              onSelectAgent={setSelectedAgentId} 
+            />
+          )}
+          {activeTab === 'metrics' && (
+            <MetricsPanel 
+              metrics={metrics} 
+              checkpoint={checkpoint} 
+              agentHistory={agentHistory} 
+            />
+          )}
+          {activeTab === 'config' && checkpoint?.data?.configuration && (
             <ConfigPanel config={checkpoint.data.configuration} />
           )}
         </div>
-      </section>
+      </div>
 
       {/* Loading and Error Messages */}
       {isLoading && <p className="mt-4">Loading checkpoint data...</p>}

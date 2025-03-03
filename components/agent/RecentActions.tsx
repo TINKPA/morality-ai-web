@@ -1,34 +1,30 @@
 import React from 'react';
 import { RecentActionsProps } from '../../types/agent';
+import { ActionRenderer } from './actions';
 
 const RecentActions: React.FC<RecentActionsProps> = ({ actionHistory = [] }) => {
   if (!actionHistory.length) {
-    return <p>No actions recorded.</p>;
+    return <p className="text-gray-500 italic">No actions recorded.</p>;
   }
 
   return (
-    <div>
-      <h4 className="text-lg font-semibold">Recent Actions</h4>
-      {actionHistory.slice().reverse().slice(0, 3).map((action, index) => (
-        <div key={index} className="mb-2">
-          <p>
-            <strong>Step {action.at_time_step}:</strong> {action.reasoning}
-          </p>
+    <div className="space-y-4">
+      <h4 className="text-lg font-semibold border-b pb-2">Recent Actions</h4>
+      {actionHistory.slice().reverse().slice(0, 1).map((action, index) => (
+        <div key={index} className="mb-4 p-3 bg-white rounded-lg shadow-sm border">
+          <div className="flex items-center mb-2">
+            <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-gray-700 mr-2">
+              {action.at_time_step}
+            </span>
+            <p className="font-medium text-gray-800">{action.reasoning}</p>
+          </div>
+          
           {action.actions && action.actions.length > 0 && (
-            <ul className="list-disc list-inside">
+            <div className="space-y-2 mt-2">
               {action.actions.map((act, i) => (
-                <li key={i}>
-                  <strong>Action:</strong> {act.action_type}
-                  {act.target_location &&
-                    ` → (${act.target_location.x}, ${act.target_location.y})`}
-                  {act.reason && (
-                    <div>
-                      <strong>Reason:</strong> {act.reason}
-                    </div>
-                  )}
-                </li>
+                <ActionRenderer key={i} action={act} />
               ))}
-            </ul>
+            </div>
           )}
         </div>
       ))}

@@ -28,6 +28,12 @@ export interface Agent {
       action_type: string;
       target_location?: { x: number; y: number };
       reason?: string;
+      target_agent_id?: string;
+      resource_id?: string;
+      quantity?: number;
+      message?: string;
+      path?: Array<{ x: number; y: number }>;
+      cost_of_action_points?: number;
     }>;
   }>;
   logs: {
