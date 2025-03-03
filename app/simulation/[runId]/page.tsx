@@ -9,6 +9,7 @@ import AgentDetailsPanel from '../../../components/AgentDetailsPanel';
 import MetricsPanel from '../../../components/MetricsPanel';
 import ConfigPanel from '../../../components/ConfigPanel';
 import Link from 'next/link';
+import { calculateMetrics } from '../../../types/metrics';
 
 export default function SimulationPage() {
   const params = useParams();
@@ -39,6 +40,9 @@ export default function SimulationPage() {
 
   // Get the current checkpoint based on currentTimeStep
   const checkpoint = checkpoints?.find(cp => cp.timeStep === currentTimeStep);
+  
+  // Calculate metrics from checkpoint data
+  const metrics = checkpoint ? calculateMetrics(checkpoint.data) : null;
 
   // Update maxTimeStep when checkpoints are loaded
   useEffect(() => {
@@ -96,7 +100,7 @@ export default function SimulationPage() {
       {/* Bottom Panels */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <MetricsPanel metrics={checkpoint?.data} />
+          <MetricsPanel metrics={metrics} />
         </div>
         <div>
           {checkpoint?.data?.configuration && (
