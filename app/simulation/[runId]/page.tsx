@@ -219,10 +219,10 @@ export default function SimulationPage() {
           <Link href="/" className="text-blue-600 hover:text-blue-800 text-sm">
             ← Back
           </Link>
-          <h1 className="text-base font-bold truncate mx-2">Simulation: {runId}</h1>
+          <h1 className="text-base font-bold truncate mx-2 text-center flex-1">Simulation: {runId}</h1>
         </div>
         
-        <div className="px-1 pb-1">
+        <div className="px-1 pb-1 max-w-3xl mx-auto">
           <TimelineControls
             currentTimeStep={currentTimeStep}
             maxTimeStep={maxTimeStep}
@@ -234,33 +234,35 @@ export default function SimulationPage() {
         </div>
       </header>
 
-      {/* Desktop Layout */}
-      <div className="hidden lg:grid lg:grid-cols-3 lg:gap-2">
-        {/* Left Column: Grid and Metrics */}
-        <div className="lg:col-span-2">
-          <SimulationGrid checkpoint={checkpoint} />
-          <div className="mt-2">
-            <MetricsPanel metrics={metrics} checkpoint={checkpoint} agentHistory={agentHistory} />
+      {/* Desktop Layout - Centered with max width */}
+      <div className="hidden lg:block max-w-7xl mx-auto">
+        <div className="grid grid-cols-3 gap-2">
+          {/* Left Column: Grid and Metrics */}
+          <div className="col-span-2">
+            <SimulationGrid checkpoint={checkpoint} />
+            <div className="mt-2">
+              <MetricsPanel metrics={metrics} checkpoint={checkpoint} agentHistory={agentHistory} />
+            </div>
           </div>
-        </div>
-        
-        {/* Right Column: Agent Details and Config */}
-        <div className="lg:col-span-1">
-          <AgentDetailsPanel
-            agents={agents}
-            selectedAgentId={selectedAgentId}
-            onSelectAgent={setSelectedAgentId}
-          />
-          <div className="mt-2">
-            {checkpoint?.data?.configuration && (
-              <ConfigPanel config={checkpoint.data.configuration} />
-            )}
+          
+          {/* Right Column: Agent Details and Config */}
+          <div className="col-span-1">
+            <AgentDetailsPanel
+              agents={agents}
+              selectedAgentId={selectedAgentId}
+              onSelectAgent={setSelectedAgentId}
+            />
+            <div className="mt-2">
+              {checkpoint?.data?.configuration && (
+                <ConfigPanel config={checkpoint.data.configuration} />
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Layout with Tabs */}
-      <div className="block lg:hidden">
+      {/* Mobile Layout with Tabs - Centered */}
+      <div className="block lg:hidden max-w-xl mx-auto">
         <div className="flex border-b mb-2">
           <button 
             className={`flex-1 px-2 py-1 text-center text-sm ${activeTab === 'grid' 
@@ -318,9 +320,11 @@ export default function SimulationPage() {
         </div>
       </div>
 
-      {/* Loading and Error Messages */}
-      {isLoading && <p className="mt-2 text-sm">Loading checkpoint data...</p>}
-      {error && <p className="mt-2 text-sm text-red-500">Error loading checkpoint data.</p>}
+      {/* Loading and Error Messages - Centered */}
+      <div className="text-center">
+        {isLoading && <p className="mt-2 text-sm">Loading checkpoint data...</p>}
+        {error && <p className="mt-2 text-sm text-red-500">Error loading checkpoint data.</p>}
+      </div>
     </main>
   );
 } 
