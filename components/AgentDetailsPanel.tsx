@@ -29,7 +29,8 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
 
   const formatUserPrompt = (prompt: string): string => {
     try {
-      return JSON.stringify(JSON.parse(prompt), null, 4);
+      const parsed = JSON.parse(prompt);
+      return JSON.stringify(parsed, null, 2);
     } catch (e) {
       return prompt;
     }
@@ -37,9 +38,9 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
 
   const promptData = selectedAgent 
     ? `${selectedAgent.logs.prompts.system_prompt}\n\n${
-        ` \`\`\` json
-        ${formatUserPrompt(selectedAgent.logs.prompts.user_prompt)}
-        \`\`\``
+        ` \`\`\`json
+${formatUserPrompt(selectedAgent.logs.prompts.user_prompt)}
+\`\`\``
       }`
     : '';
     
@@ -66,9 +67,12 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
             <div className="my-4">
               <button
                 onClick={() => setShowSubWindow(true)}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-sm flex items-center"
               >
-                Show Prompt &amp; Response
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                View Prompt &amp; Response
               </button>
             </div>
           )}

@@ -23,6 +23,35 @@ const PromptResponseSubWindow: React.FC<PromptResponseSubWindowProps> = ({
     };
   }, [onClose]);
 
+  // Format JSON for better display with syntax highlighting
+  const formatJSON = (jsonString: string) => {
+    try {
+      const parsedJSON = JSON.parse(jsonString);
+      return JSON.stringify(parsedJSON, null, 2);
+    } catch (e) {
+      return jsonString;
+    }
+  };
+
+  // Attempt to format the prompt as JSON if possible
+  const formattedPrompt = () => {
+    try {
+      if (prompt.includes('{') && prompt.includes('}')) {
+        // Extract JSON part from the prompt if it contains both text and JSON
+        const jsonMatch = prompt.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const jsonPart = jsonMatch[0];
+          const parsedJSON = JSON.parse(jsonPart);
+          const formattedJSON = JSON.stringify(parsedJSON, null, 2);
+          return prompt.replace(jsonPart, `\n\`\`\`json\n${formattedJSON}\n\`\`\``);
+        }
+      }
+      return prompt;
+    } catch (e) {
+      return prompt;
+    }
+  };
+
   // Format JSON response for better display
   const formattedResponse = () => {
     try {
@@ -31,6 +60,18 @@ const PromptResponseSubWindow: React.FC<PromptResponseSubWindowProps> = ({
     } catch (e) {
       return response;
     }
+  };
+
+  // Syntax highlighting for JSON
+  const highlightJSON = (jsonString: string) => {
+    if (!jsonString) return '';
+    
+    // Simple syntax highlighting
+    return jsonString
+      .replace(/"([^"]+)":/g, '<span class="text-purple-600">"$1"</span>:') // keys
+      .replace(/: "([^"]+)"/g, ': <span class="text-green-600">"$1"</span>') // string values
+      .replace(/: (true|false)/g, ': <span class="text-blue-600">$1</span>') // boolean values
+      .replace(/: (\d+)/g, ': <span class="text-amber-600">$1</span>'); // number values
   };
 
   return (
@@ -78,7 +119,9 @@ const PromptResponseSubWindow: React.FC<PromptResponseSubWindowProps> = ({
           {activeTab === 'prompt' && (
             <div className="h-full">
               <div className="border border-gray-300 rounded-md p-4 overflow-auto h-full bg-gray-50">
-                <ReactMarkdown>{prompt || 'No prompt available.'}</ReactMarkdown>
+                <ReactMarkdown className="prose max-w-none">
+                  {formattedPrompt() || 'No prompt available.'}
+                </ReactMarkdown>
               </div>
             </div>
           )}
@@ -86,7 +129,18 @@ const PromptResponseSubWindow: React.FC<PromptResponseSubWindowProps> = ({
           {activeTab === 'response' && (
             <div className="h-full">
               <div className="border border-gray-300 rounded-md p-4 overflow-auto h-full bg-gray-50 font-mono text-sm">
-                <pre>{formattedResponse()}</pre>
+                {response.startsWith('{') ? (
+                  <div className="bg-gray-900 text-gray-100 p-4 rounded-md shadow-inner">
+                    <pre 
+                      className="whitespace-pre-wrap break-words"
+                      dangerouslySetInnerHTML={{ 
+                        __html: highlightJSON(formattedResponse()) 
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <pre className="whitespace-pre-wrap break-words">{response}</pre>
+                )}
               </div>
             </div>
           )}
