@@ -26,9 +26,6 @@ const AttackAction: React.FC<AttackActionProps> = ({ action }) => {
             Agent {action.target_agent_id}
           </span>
         </div>
-        <div className="mt-2 text-xs text-red-600 font-medium">
-          ⚠️ This action may have negative consequences on reputation
-        </div>
       </div>
     </ActionBase>
   );

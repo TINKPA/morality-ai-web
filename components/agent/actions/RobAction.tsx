@@ -41,9 +41,6 @@ const RobAction: React.FC<RobActionProps> = ({ action }) => {
           </div>
         )}
         
-        <div className="mt-2 text-xs text-purple-600 font-medium">
-          ⚠️ This action may have negative consequences on reputation
-        </div>
       </div>
     </ActionBase>
   );
