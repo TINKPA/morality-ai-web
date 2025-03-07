@@ -3,24 +3,10 @@ import { BasicInformationProps } from '../../types/agent';
 
 const BasicInformation: React.FC<BasicInformationProps> = ({ agent }) => {
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col">
-          <span className="text-xs text-gray-500 uppercase tracking-wide">ID</span>
-          <span className="font-medium text-gray-800">{agent.id}</span>
-        </div>
-        
-        <div className="flex flex-col">
-          <span className="text-xs text-gray-500 uppercase tracking-wide">Type</span>
-          <span className="font-medium text-gray-800 capitalize">{agent.type}</span>
-        </div>
-      </div>
-      
+    <div className="space-y-4">
       <div className="flex flex-col">
-        <span className="text-xs text-gray-500 uppercase tracking-wide">Created at Step</span>
-        <span className="font-medium text-gray-800">
-          {agent.created_at_step !== null ? agent.created_at_step : 'N/A'}
-        </span>
+        <span className="text-xs text-gray-500 uppercase tracking-wide">ID</span>
+        <span className="font-medium text-gray-800">{agent.id}</span>
       </div>
       
       {Object.keys(agent.attributes).length > 0 && (
