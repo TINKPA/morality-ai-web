@@ -37,11 +37,9 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
   };
 
   const promptData = selectedAgent 
-    ? `${selectedAgent.logs.prompts.system_prompt}\n\n${
-        ` \`\`\`json
+    ? `${selectedAgent.logs.prompts.system_prompt}\n\n\`\`\`json
 ${formatUserPrompt(selectedAgent.logs.prompts.user_prompt)}
 \`\`\``
-      }`
     : '';
     
   const responseData = selectedAgent ? selectedAgent.logs.response : '';
