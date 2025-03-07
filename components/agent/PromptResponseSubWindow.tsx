@@ -89,7 +89,7 @@ const PromptResponseSubWindow: React.FC<PromptResponseSubWindowProps> = ({
 
   // Render system prompt content
   const renderSystemPrompt = () => (
-    <div className="h-full">
+    <div className="h-full overflow-hidden">
       <div className="border border-gray-300 rounded-md p-4 overflow-auto h-full bg-gray-50">
         <ReactMarkdown className="prose max-w-none">
           {systemPrompt || 'No system prompt available.'}
@@ -100,7 +100,7 @@ const PromptResponseSubWindow: React.FC<PromptResponseSubWindowProps> = ({
 
   // Render user prompt content
   const renderUserPrompt = () => (
-    <div className="h-full">
+    <div className="h-full overflow-hidden">
       <div className="border border-gray-300 rounded-md p-4 overflow-auto h-full bg-gray-50">
         {userPrompt ? (
           <div className="bg-gray-900 text-gray-100 p-4 rounded-md shadow-inner">
@@ -120,7 +120,7 @@ const PromptResponseSubWindow: React.FC<PromptResponseSubWindowProps> = ({
 
   // Render response content
   const renderResponse = () => (
-    <div className="h-full">
+    <div className="h-full overflow-hidden">
       <div className="border border-gray-300 rounded-md p-4 overflow-auto h-full bg-gray-50 font-mono text-sm">
         {response.startsWith('{') ? (
           <div className="bg-gray-900 text-gray-100 p-4 rounded-md shadow-inner">
@@ -223,18 +223,24 @@ const PromptResponseSubWindow: React.FC<PromptResponseSubWindowProps> = ({
           </>
         ) : (
           // Row view - all three sections side by side
-          <div className="h-full grid grid-cols-3 gap-4">
-            <div className="flex flex-col">
+          <div className="h-full grid grid-cols-3 gap-4 overflow-hidden">
+            <div className="flex flex-col h-full overflow-hidden">
               <h3 className="font-medium text-blue-600 mb-2 pb-2 border-b">System Prompt</h3>
-              {renderSystemPrompt()}
+              <div className="flex-1 min-h-0">
+                {renderSystemPrompt()}
+              </div>
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col h-full overflow-hidden">
               <h3 className="font-medium text-blue-600 mb-2 pb-2 border-b">User Prompt</h3>
-              {renderUserPrompt()}
+              <div className="flex-1 min-h-0">
+                {renderUserPrompt()}
+              </div>
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col h-full overflow-hidden">
               <h3 className="font-medium text-blue-600 mb-2 pb-2 border-b">Response</h3>
-              {renderResponse()}
+              <div className="flex-1 min-h-0">
+                {renderResponse()}
+              </div>
             </div>
           </div>
         )}
