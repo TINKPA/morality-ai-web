@@ -21,7 +21,7 @@ const PromptResponseSubWindow: React.FC<PromptResponseSubWindowProps> = ({
   onClose 
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('systemPrompt');
-  const [viewMode, setViewMode] = useState<ViewMode>('tabs');
+  const [viewMode, setViewMode] = useState<ViewMode>('row');
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Extract system prompt and user prompt from the combined prompt
