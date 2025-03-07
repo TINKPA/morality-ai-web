@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import AgentSelector from './agent/AgentSelector';
 import BasicInformation from './agent/BasicInformation';
 import AgentState from './agent/AgentState';
+import AgentInventory from './agent/AgentInventory';
 import RecentActions from './agent/RecentActions';
 import PromptResponseSubWindow from './agent/PromptResponseSubWindow';
 import { Agent, AgentDetailsPanelProps } from '../types/agent';
@@ -60,6 +61,8 @@ ${formatUserPrompt(selectedAgent.logs.prompts.user_prompt)}
           <BasicInformation agent={selectedAgent} />
           
           <AgentState state={selectedAgent.state} />
+          
+          <AgentInventory inventory={selectedAgent.inventory} />
           
           {(promptData || responseData) && (
             <div className="my-4">

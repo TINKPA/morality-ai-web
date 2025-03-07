@@ -66,6 +66,10 @@ export interface AgentStateProps {
   state: Agent['state'];
 }
 
+export interface AgentInventoryProps {
+  inventory: Agent['inventory'];
+}
+
 export interface RecentActionsProps {
   actionHistory: Agent['action_history'];
 }
