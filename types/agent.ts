@@ -5,12 +5,14 @@ export interface Agent {
   state: {
     hp: number;
     age: number;
-    food_stock: number;
+    food_stock?: number;
     location: { x: number; y: number };
-    reputation: number;
+    reputation?: number;
     is_alive?: boolean;
+    reproduction_cooldown: number;
+    parent_id: string;
   };
-  attributes: { [key: string]: string | number };
+  attributes?: { [key: string]: string | number };
   inventory: Array<{
     type: string;
     quantity: number;
@@ -20,6 +22,7 @@ export interface Agent {
     long_term_memory?: string;
     beliefs?: string[];
     received_messages?: [content: string];
+    agent_specific_memory?: { [key: string]: string };
   };
   action_history: Array<{
     at_time_step: number;
@@ -34,6 +37,7 @@ export interface Agent {
       message?: string;
       path?: Array<{ x: number; y: number }>;
       cost_of_action_points?: number;
+      description?: string;
     }>;
   }>;
   logs: {
@@ -42,6 +46,7 @@ export interface Agent {
       user_prompt: string;
     };
     response: string;
+    raw_response?: any;
   };
 }
 

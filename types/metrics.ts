@@ -54,7 +54,7 @@ export function calculateMetrics(checkpointData: any): Metrics | null {
 
   // Count moral vs non-moral agents (assuming agent type contains this information)
   const moralAgents = agents.filter(agent => 
-    agent.type.toLowerCase() == 'moral').length;
+    agent.type?.toLowerCase() === 'moral').length;
 
   const nonMoralAgents = agents.length - moralAgents;
 

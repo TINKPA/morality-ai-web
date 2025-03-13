@@ -9,7 +9,14 @@ const BasicInformation: React.FC<BasicInformationProps> = ({ agent }) => {
         <span className="font-medium text-gray-800">{agent.id}</span>
       </div>
       
-      {Object.keys(agent.attributes).length > 0 && (
+      <div className="flex flex-col">
+        <span className="text-xs text-gray-500 uppercase tracking-wide">Type</span>
+        <span className={`font-medium ${agent.type === 'moral' ? 'text-blue-600' : 'text-red-600'}`}>
+          {agent.type || 'Unknown'}
+        </span>
+      </div>
+      
+      {agent.attributes && Object.keys(agent.attributes).length > 0 && (
         <div>
           <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Attributes</span>
           <div className="grid grid-cols-2 gap-2">

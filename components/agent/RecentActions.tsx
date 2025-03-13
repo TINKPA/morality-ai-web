@@ -164,9 +164,9 @@ const RecentActions: React.FC<RecentActionsProps> = ({ actionHistory }) => {
                     </div>
                     <div className="flex-1 pt-1">
                       <div className="flex flex-wrap items-center">
-                        <span className={`font-semibold capitalize ${getTextColor(action.action_type)} mr-2 text-base`}>
-                          {action.action_type}
-                        </span>
+                        <h4 className={`text-sm font-medium ${getTextColor(action.action_type)} mr-2 text-base`}>
+                          {action.action_type.charAt(0).toUpperCase() + action.action_type.slice(1)}
+                        </h4>
                         
                         {action.cost_of_action_points !== undefined && (
                           <span className="text-xs bg-white bg-opacity-70 text-gray-700 px-3 py-1 rounded-full font-medium shadow-sm">
@@ -175,10 +175,14 @@ const RecentActions: React.FC<RecentActionsProps> = ({ actionHistory }) => {
                         )}
                       </div>
                       
+                      {/* Display description if available */}
+                      {action.description && (
+                        <p className="mt-1 text-sm text-gray-600">{action.description}</p>
+                      )}
+
+                      {/* Display reason if available */}
                       {action.reason && (
-                        <div className="text-sm text-gray-600 mt-2 italic bg-white bg-opacity-50 p-2 rounded">
-                          Reason: {action.reason}
-                        </div>
+                        <p className="mt-1 text-xs text-gray-500 italic">{action.reason}</p>
                       )}
 
                       {/* Additional action details */}

@@ -6,14 +6,59 @@ const AgentState: React.FC<AgentStateProps> = ({ state }) => {
 
   // Filter out properties that are displayed separately
   const filteredState = Object.entries(state).filter(
-    ([key]) => !['hp', 'age', 'location', 'food_stock'].includes(key)
+    ([key]) => !['hp', 'age', 'location'].includes(key)
   );
 
   return (
-    <div>
+    <div className="space-y-4">
+      {/* HP and Age - Always displayed prominently */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">HP</span>
+          <div className="flex items-center">
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div 
+                className="bg-green-600 h-2.5 rounded-full" 
+                style={{ width: `${Math.min(100, (state.hp / 60) * 100)}%` }}
+              ></div>
+            </div>
+            <span className="ml-2 font-medium">{state.hp}/60</span>
+          </div>
+        </div>
+        
+        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Age</span>
+          <span className="font-medium text-gray-800">{state.age} steps</span>
+        </div>
+      </div>
+      
+      {/* Location */}
+      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Location</span>
+        <div className="font-medium text-gray-800">
+          ({state.location.x}, {state.location.y})
+        </div>
+      </div>
+      
+      {/* Reproduction Info */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Reproduction Cooldown</span>
+          <span className="font-medium text-gray-800">{state.reproduction_cooldown}</span>
+        </div>
+        
+        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Parent ID</span>
+          <span className="font-medium text-gray-800">{state.parent_id || 'None'}</span>
+        </div>
+      </div>
+
+      {/* Other state properties */}
       {filteredState.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
-          {filteredState.map(([key, value]) => {
+        <div className="grid grid-cols-2 gap-3 mt-3">
+          {filteredState
+            .filter(([key]) => !['reproduction_cooldown', 'parent_id'].includes(key))
+            .map(([key, value]) => {
             // Format the value based on its type
             let displayValue: React.ReactNode;
             let valueClass = "font-medium text-gray-800";

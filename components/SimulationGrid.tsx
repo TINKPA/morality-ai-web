@@ -39,7 +39,10 @@ const SimulationGrid: React.FC<SimulationGridProps> = ({ checkpoint }) => {
         {agentsAtCell.length > 0 && (
           <div className="absolute bottom-1 right-1 flex flex-wrap">
             {agentsAtCell.map((agent: any) => (
-              <div key={agent.id} className="bg-blue-300 text-xs p-1 rounded mr-0.5">
+              <div 
+                key={agent.id} 
+                className={`text-xs p-1 rounded mr-0.5 ${agent.type === 'moral' ? 'bg-blue-300' : 'bg-red-300'}`}
+              >
                 {/* Display a short identifier from the agent's id */}
                 {agent.id}
               </div>
@@ -64,10 +67,27 @@ const SimulationGrid: React.FC<SimulationGridProps> = ({ checkpoint }) => {
     );
   }
 
+  // Get observations from the checkpoint data
+  const observations = checkpoint?.data?.observations || [];
+
   return (
     <div className="grid-container p-4">
       <h2 className="text-xl font-bold mb-4">Simulation Grid (16x16)</h2>
       <div className="flex flex-col">{gridRows}</div>
+      
+      {/* Display observations */}
+      {observations.length > 0 && (
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">Observations</h3>
+          <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 max-h-40 overflow-y-auto">
+            <ul className="list-disc pl-5 space-y-1">
+              {observations.map((observation: string, index: number) => (
+                <li key={index} className="text-sm text-gray-700">{observation}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
