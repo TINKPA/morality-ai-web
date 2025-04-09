@@ -8,20 +8,11 @@ generator client {
 }
 
 model SimulationRun {
-  id          Int       @id @default(autoincrement())
-  runId       String    @unique
-  description String?
-  createdAt   DateTime  @default(now())
-  visible     Boolean   @default(true)
-  checkpoints Checkpoint[]
+  id          Int        @id @default(autoincrement())
+  runId       String
+  createdAt   DateTime   @default(now())
+  visible     Boolean    @default(true)
+  checkpoint  Json
 }
 
-model Checkpoint {
-  id          Int           @id @default(autoincrement())
-  timeStep    Int
-  agentStep   Int
-  data        Json
-  createdAt   DateTime      @default(now())
-  simulation  SimulationRun @relation(fields: [simulationRunId], references: [id])
-  simulationRunId Int
-}
+

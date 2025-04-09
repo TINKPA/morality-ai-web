@@ -31,7 +31,6 @@ export default function DashboardPage() {
 
   // Handle run deletion
   const handleDeleteRun = async (runId: string) => {
-    // if (confirm('Are you sure you want to hide this simulation run? You won\'t see it in the dashboard anymore.')) {
     if (true) {
       try {
         const response = await fetch(`/api/checkpoints/${runId}`, {

@@ -8,19 +8,21 @@ import SimulationGrid from '../../../components/SimulationGrid';
 import AgentDetailsPanel from '../../../components/AgentDetailsPanel';
 import MetricsPanel from '../../../components/MetricsPanel';
 import ConfigPanel from '../../../components/ConfigPanel';
+import ObservationsPanel from '../../../components/ObservationsPanel';
 import Link from 'next/link';
 import { calculateMetrics, AgentHistoryPoint } from '../../../types/metrics';
+import { Agent } from '../../../types/agent';
+import { Checkpoint } from '../../../types/Checkpoint';
 
 export default function SimulationPage() {
   const params = useParams();
   const runId = params.runId as string;
   
-  const [maxTimeStep, setMaxTimeStep] = useState(99);
   const [currentTimeStep, setCurrentTimeStep] = useState(1);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('grid');
 
-  // Fetch all checkpoints for the selected run
+  // Fetch all checkpoints for this run
   const {
     data: checkpoints,
     error,
@@ -28,43 +30,41 @@ export default function SimulationPage() {
   } = useQuery({
     queryKey: ['checkpoints', runId],
     queryFn: async () => {
-      if (!runId) return [];
+      if (!runId) return null;
       
       const response = await fetch(`/api/checkpoints/${runId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch checkpoint data');
+        throw new Error('Failed to fetch simulation data');
       }
-      return response.json();
+      const data = await response.json();
+      console.log(`Fetched ${data.length} checkpoints`);
+      const checkpoints = data as Checkpoint[];
+      console.log(`Fetched ${checkpoints.length} checkpoints`);
+
+      return checkpoints;
     },
     staleTime: 5 * 60 * 1000, // Keep data fresh for 5 minutes
   });
 
-  // Get the current checkpoint based on currentTimeStep
-  const checkpoint = checkpoints?.find(cp => cp.timeStep === currentTimeStep);
+  // Get the current checkpoint based on timeStep
+  const currentCheckpoint = checkpoints?.[currentTimeStep - 1];
+  const checkpoint = currentCheckpoint?.checkpoint;
   
   // Calculate metrics from checkpoint data
-  const metrics = checkpoint ? calculateMetrics(checkpoint.data) : null;
+  const metrics = checkpoint ? calculateMetrics(checkpoint) : null;
 
   // Generate agent history data from all checkpoints
-  const agentHistory = checkpoints?.map(cp => {
-    const cpMetrics = calculateMetrics(cp.data);
+  const agentHistory: AgentHistoryPoint[] = checkpoints?.map((cp, index) => {
+    const cpMetrics = calculateMetrics(cp.checkpoint);
     return {
-      timeStep: cp.timeStep,
+      timeStep: index + 1,
       moralAgents: cpMetrics?.moralAgents || 0,
       nonMoralAgents: cpMetrics?.nonMoralAgents || 0
-    } as AgentHistoryPoint;
-  }).sort((a, b) => a.timeStep - b.timeStep);
-
-  // Update maxTimeStep when checkpoints are loaded
-  useEffect(() => {
-    if (checkpoints && checkpoints.length > 0) {
-      const maxStep = Math.max(...checkpoints.map(cp => cp.timeStep));
-      setMaxTimeStep(maxStep);
-    }
-  }, [checkpoints]);
+    };
+  }) || [];
 
   // Get the current agents
-  const agents = checkpoint?.data?.social_environment?.agents || [];
+  const agents = checkpoint?.social_environment?.agents || [];
 
   // Add keyboard event listener for arrow key navigation
   useEffect(() => {
@@ -77,55 +77,8 @@ export default function SimulationPage() {
         }
       } else if (event.key === 'ArrowRight') {
         // Go to next step if not at the end
-        if (currentTimeStep < maxTimeStep) {
+        if (currentTimeStep < (checkpoints?.length || 0)) {
           setCurrentTimeStep(prev => prev + 1);
-        }
-      } 
-      // Up/Down arrows for agent navigation
-      else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-        // Prevent default scrolling behavior
-        event.preventDefault();
-        
-        // Only navigate agents if there are agents to navigate
-        if (agents.length > 0) {
-          // If no agent is selected, select the first one
-          if (!selectedAgentId) {
-            // Find the first agent with valid logs
-            const validAgent = findValidAgent(agents);
-            if (validAgent) {
-              setSelectedAgentId(validAgent.id);
-              // On mobile, switch to agents tab
-              if (window.innerWidth < 1024) {
-                setActiveTab('agents');
-              }
-            }
-            return;
-          }
-
-          // Find the current agent index
-          const currentIndex = agents.findIndex(agent => agent.id === selectedAgentId);
-          
-          if (currentIndex !== -1) {
-            let newIndex;
-            let newAgent;
-            
-            if (event.key === 'ArrowUp') {
-              // Find previous valid agent
-              newAgent = findPreviousValidAgent(agents, currentIndex);
-            } else {
-              // Find next valid agent
-              newAgent = findNextValidAgent(agents, currentIndex);
-            }
-            
-            if (newAgent) {
-              setSelectedAgentId(newAgent.id);
-              
-              // On mobile, switch to agents tab
-              if (window.innerWidth < 1024) {
-                setActiveTab('agents');
-              }
-            }
-          }
         }
       }
     };
@@ -137,83 +90,10 @@ export default function SimulationPage() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [currentTimeStep, maxTimeStep, agents, selectedAgentId]);
-
-  // Helper function to check if an agent has valid logs
-  const isValidAgent = (agent: any) => {
-    return agent && 
-           agent.logs && 
-           agent.logs.prompts && 
-           agent.logs.prompts.system_prompt && 
-           agent.logs.prompts.user_prompt;
-  };
-
-  // Helper function to find a valid agent in the array
-  const findValidAgent = (agents: any[]) => {
-    return agents.find(agent => isValidAgent(agent));
-  };
-
-  // Helper function to find the next valid agent
-  const findNextValidAgent = (agents: any[], currentIndex: number) => {
-    // Try to find a valid agent after the current one
-    for (let i = currentIndex + 1; i < agents.length; i++) {
-      if (isValidAgent(agents[i])) {
-        return agents[i];
-      }
-    }
-    
-    // If not found, wrap around to the beginning
-    for (let i = 0; i < currentIndex; i++) {
-      if (isValidAgent(agents[i])) {
-        return agents[i];
-      }
-    }
-    
-    // If the current agent is valid, return it
-    if (isValidAgent(agents[currentIndex])) {
-      return agents[currentIndex];
-    }
-    
-    // If no valid agents found, return null
-    return null;
-  };
-
-  // Helper function to find the previous valid agent
-  const findPreviousValidAgent = (agents: any[], currentIndex: number) => {
-    // Try to find a valid agent before the current one
-    for (let i = currentIndex - 1; i >= 0; i--) {
-      if (isValidAgent(agents[i])) {
-        return agents[i];
-      }
-    }
-    
-    // If not found, wrap around to the end
-    for (let i = agents.length - 1; i > currentIndex; i--) {
-      if (isValidAgent(agents[i])) {
-        return agents[i];
-      }
-    }
-    
-    // If the current agent is valid, return it
-    if (isValidAgent(agents[currentIndex])) {
-      return agents[currentIndex];
-    }
-    
-    // If no valid agents found, return null
-    return null;
-  };
-
-  const handleTimeStepChange = (step: number | ((prev: number) => number)) => {
-    if (typeof step === 'number') {
-      setCurrentTimeStep(step);
-    } else {
-      setCurrentTimeStep((prev) => step(prev));
-    }
-  };
+  }, [currentTimeStep, checkpoints]);
 
   return (
-    <main className="p-2 bg-gray-100 min-h-screen">
-      {/* Fixed Header with Back Button and Timeline Controls */}
+    <main className="container mx-auto p-4">
       <header className="sticky top-0 z-10 bg-white shadow-sm mb-2">
         <div className="flex items-center justify-between p-1">
           <Link href="/" className="text-blue-600 hover:text-blue-800 text-sm">
@@ -225,37 +105,51 @@ export default function SimulationPage() {
         <div className="px-1 pb-1 max-w-3xl mx-auto">
           <TimelineControls
             currentTimeStep={currentTimeStep}
-            maxTimeStep={maxTimeStep}
-            onTimeStepChange={handleTimeStepChange}
+            maxTimeStep={checkpoints?.length || 1}
+            onTimeStepChange={setCurrentTimeStep}
           />
           <div className="text-xs text-gray-500 text-center mt-0.5">
-            Use ← → keys to navigate steps | ↑ ↓ keys for agents
+            Use ← → keys to navigate steps
           </div>
         </div>
       </header>
 
       {/* Desktop Layout - Centered with max width */}
       <div className="hidden lg:block max-w-7xl mx-auto">
-        <div className="grid grid-cols-3 gap-2">
-          {/* Left Column: Grid and Metrics */}
-          <div className="col-span-2">
-            <SimulationGrid checkpoint={checkpoint} />
-            <div className="mt-2">
-              <MetricsPanel metrics={metrics} checkpoint={checkpoint} agentHistory={agentHistory} />
+        <div className="grid grid-cols-4 gap-2">
+          {/* Left Column: Observations */}
+          <div className="col-span-1 h-[calc(100vh-8rem)]">
+            <ObservationsPanel checkpoint={checkpoint || null} />
+          </div>
+          
+          {/* Middle Column: Grid and Metrics */}
+          <div className="col-span-2 h-[calc(100vh-8rem)]">
+            <div className="h-full flex flex-col">
+              <div className="flex-1">
+                <SimulationGrid checkpoint={checkpoint} />
+              </div>
+              <div className="mt-2">
+                <MetricsPanel metrics={metrics} checkpoint={checkpoint || null} agentHistory={agentHistory} />
+              </div>
             </div>
           </div>
           
           {/* Right Column: Agent Details and Config */}
-          <div className="col-span-1">
-            <AgentDetailsPanel
-              agents={agents}
-              selectedAgentId={selectedAgentId}
-              onSelectAgent={setSelectedAgentId}
-            />
-            <div className="mt-2">
-              {checkpoint?.data?.configuration && (
-                <ConfigPanel config={checkpoint.data.configuration} />
-              )}
+          <div className="col-span-1 h-[calc(100vh-8rem)]">
+            <div className="h-full flex flex-col">
+              <div className="flex-1">
+                <AgentDetailsPanel
+                  agents={agents}
+                  selectedAgentId={selectedAgentId}
+                  onSelectAgent={setSelectedAgentId}
+                  metadata={checkpoint?.metadata}
+                />
+              </div>
+              <div className="mt-2">
+                {checkpoint?.configuration && (
+                  <ConfigPanel config={checkpoint.configuration} />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -289,6 +183,14 @@ export default function SimulationPage() {
             Metrics
           </button>
           <button 
+            className={`flex-1 px-2 py-1 text-center text-sm ${activeTab === 'observations' 
+              ? 'border-b-2 border-blue-500 text-blue-600 font-medium' 
+              : 'text-gray-600'}`}
+            onClick={() => setActiveTab('observations')}
+          >
+            Observations
+          </button>
+          <button 
             className={`flex-1 px-2 py-1 text-center text-sm ${activeTab === 'config' 
               ? 'border-b-2 border-blue-500 text-blue-600 font-medium' 
               : 'text-gray-600'}`}
@@ -304,26 +206,30 @@ export default function SimulationPage() {
             <AgentDetailsPanel 
               agents={agents} 
               selectedAgentId={selectedAgentId} 
-              onSelectAgent={setSelectedAgentId} 
+              onSelectAgent={setSelectedAgentId}
+              metadata={checkpoint?.metadata}
             />
           )}
           {activeTab === 'metrics' && (
             <MetricsPanel 
               metrics={metrics} 
-              checkpoint={checkpoint} 
+              checkpoint={checkpoint || null} 
               agentHistory={agentHistory} 
             />
           )}
-          {activeTab === 'config' && checkpoint?.data?.configuration && (
-            <ConfigPanel config={checkpoint.data.configuration} />
+          {activeTab === 'observations' && (
+            <ObservationsPanel checkpoint={checkpoint || null} />
+          )}
+          {activeTab === 'config' && checkpoint?.configuration && (
+            <ConfigPanel config={checkpoint.configuration} />
           )}
         </div>
       </div>
 
       {/* Loading and Error Messages - Centered */}
       <div className="text-center">
-        {isLoading && <p className="mt-2 text-sm">Loading checkpoint data...</p>}
-        {error && <p className="mt-2 text-sm text-red-500">Error loading checkpoint data.</p>}
+        {isLoading && <p className="mt-2 text-sm">Loading simulation data...</p>}
+        {error && <p className="mt-2 text-sm text-red-500">Error loading simulation data.</p>}
       </div>
     </main>
   );

@@ -26,10 +26,8 @@ const RunSelector: React.FC<RunSelectorProps> = ({ selectedRunId, onSelect }) =>
     },
   });
 
-  // If no run is selected and runs are available, default to the latest run
   useEffect(() => {
     if (!selectedRunId && runs && runs.length > 0) {
-      // Sort runs in descending order by createdAt (newest first)
       const sortedRuns = [...runs].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
@@ -40,7 +38,6 @@ const RunSelector: React.FC<RunSelectorProps> = ({ selectedRunId, onSelect }) =>
   if (isLoading) return <p>Loading runs...</p>;
   if (error) return <p>Error loading runs: {error.message}</p>;
 
-  // Optionally sort the options here too, so the latest run is at the top.
   const sortedRuns = runs
     ? [...runs].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

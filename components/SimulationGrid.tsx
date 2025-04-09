@@ -9,8 +9,8 @@ const SimulationGrid: React.FC<SimulationGridProps> = ({ checkpoint }) => {
   // Helper function to render each cell in the grid.
   const renderCell = (x: number, y: number) => {
     // Extract arrays for resources and agents.
-    const resources = checkpoint?.data?.physical_environment?.resources || [];
-    const agents = checkpoint?.data?.social_environment?.agents || [];
+    const resources = checkpoint?.physical_environment?.resources || [];
+    const agents = checkpoint?.social_environment?.agents || [];
 
     // Find a resource that is located at cell (x, y).
     const resourceAtCell = resources.find(

@@ -1,17 +1,22 @@
+import { CheckpointData, Resource } from './Checkpoint';
+
 export interface Metrics {
   totalAgents: number;
   moralAgents: number;
   nonMoralAgents: number;
   averageHP: number;
-  maxHP: number;
   minHP: number;
+  maxHP: number;
+  totalResources: number;
+  averageResources: number;
+  crisisLevel: number;
 }
 
 export interface ResourceMetrics {
-  totalResources: number;
-  totalPlants: number;
-  averagePlantsPerNode: number;
-  plantPhaseDistribution: Record<string, number>;
+  totalQuantity: number;
+  averageQuantity: number;
+  minQuantity: number;
+  maxQuantity: number;
 }
 
 export interface AgentHistoryPoint {
@@ -22,8 +27,8 @@ export interface AgentHistoryPoint {
 
 export interface MetricsPanelProps {
   metrics: Metrics | null;
-  checkpoint?: any;
-  agentHistory?: AgentHistoryPoint[];
+  checkpoint: CheckpointData | null;
+  agentHistory: AgentHistoryPoint[];
 }
 
 import { Agent } from './agent';
@@ -33,93 +38,55 @@ import { Agent } from './agent';
  * @param checkpointData The data from a simulation checkpoint
  * @returns Metrics object with calculated statistics
  */
-export function calculateMetrics(checkpointData: any): Metrics | null {
-  if (!checkpointData || !checkpointData.social_environment || !checkpointData.social_environment.agents) {
-    console.log("No valid checkpoint data found");
-    return null;
-  }
+export function calculateMetrics(checkpoint: CheckpointData): Metrics {
+  const agents = checkpoint.social_environment.agents;
+  const resources = checkpoint.physical_environment.resources;
+  const crisis = checkpoint.physical_environment.crisis;
 
-  const agents: Agent[] = checkpointData.social_environment.agents;
-  
-  // Log the first agent to see its structure
-  if (agents.length > 0) {
-    console.log("Sample agent structure:", JSON.stringify(agents[0], null, 2));
-    console.log("Agent types:", agents.map(agent => agent.type));
-  }
-  
-  if (agents.length === 0) {
-    console.log("No live agents found");
-    return null;
-  }
+  // Calculate agent metrics
+  const totalAgents = agents.length;
+  const moralAgents = agents.filter(a => a.type === 'moral').length;
+  const nonMoralAgents = agents.filter(a => a.type === 'immoral').length;
 
-  // Count moral vs non-moral agents (assuming agent type contains this information)
-  const moralAgents = agents.filter(agent => 
-    agent.type?.toLowerCase() === 'moral').length;
+  // Calculate HP metrics
+  const hps = agents.map(a => a.state.hp);
+  const averageHP = hps.length > 0 ? hps.reduce((a, b) => a + b, 0) / hps.length : 0;
+  const minHP = hps.length > 0 ? Math.min(...hps) : 0;
+  const maxHP = hps.length > 0 ? Math.max(...hps) : 0;
 
-  const nonMoralAgents = agents.length - moralAgents;
-
-  // Calculate HP statistics
-  const hpValues = agents.map(agent => agent.state.hp);
-  console.log("HP values:", hpValues);
-  
-  const averageHP = hpValues.reduce((sum, hp) => sum + hp, 0) / hpValues.length;
-  const maxHP = Math.max(...hpValues);
-  const minHP = Math.min(...hpValues);
-  console.log(`HP stats - Avg: ${averageHP.toFixed(2)}, Max: ${maxHP}, Min: ${minHP}`);
+  // Calculate resource metrics
+  const totalResources = resources.reduce((sum, r) => sum + r.quantity, 0);
+  const averageResources = resources.length > 0 ? totalResources / resources.length : 0;
 
   return {
-    totalAgents: agents.length,
+    totalAgents,
     moralAgents,
     nonMoralAgents,
     averageHP,
+    minHP,
     maxHP,
-    minHP
+    totalResources,
+    averageResources,
+    crisisLevel: crisis.level
   };
 }
 
 /**
- * Calculates resource metrics from checkpoint data
- * @param checkpointData The data from a simulation checkpoint
+ * Calculate metrics for resources
+ * @param resources Array of resources with quantity property
  * @returns ResourceMetrics object with calculated statistics
  */
-export function calculateResourceMetrics(checkpointData: any): ResourceMetrics | null {
-  if (!checkpointData || !checkpointData.physical_environment || !checkpointData.physical_environment.resources) {
-    console.log("No valid resource data found");
-    return null;
-  }
-
-  const resources = checkpointData.physical_environment.resources;
-  
-  if (resources.length === 0) {
-    console.log("No resources found");
-    return null;
-  }
-
-  // Log the first resource to see its structure
-  if (resources.length > 0) {
-    console.log("Sample resource structure:", JSON.stringify(resources[0], null, 2));
-  }
-
-  // Calculate total plants
-  const totalPlants = resources.reduce((sum, resource) => sum + resource.quantity, 0);
-  
-  // Calculate plant phase distribution
-  const plantPhaseDistribution: Record<string, number> = {};
-  
-  resources.forEach(resource => {
-    const phase = resource.phase || 'unknown';
-    if (!plantPhaseDistribution[phase]) {
-      plantPhaseDistribution[phase] = 0;
-    }
-    plantPhaseDistribution[phase] += resource.quantity;
-  });
-
-  console.log("Plant phase distribution:", plantPhaseDistribution);
+export function calculateResourceMetrics(resources: Resource[]): ResourceMetrics {
+  const quantities = resources?.map(r => r.quantity);
+  const totalQuantity = quantities?.reduce((sum, q) => sum + q, 0);
+  const averageQuantity = quantities?.length > 0 ? totalQuantity / quantities?.length : 0;
+  const minQuantity = quantities?.length > 0 ? Math.min(...quantities) : 0;
+  const maxQuantity = quantities?.length > 0 ? Math.max(...quantities) : 0;
 
   return {
-    totalResources: resources.length,
-    totalPlants,
-    averagePlantsPerNode: totalPlants / resources.length,
-    plantPhaseDistribution
+    totalQuantity,
+    averageQuantity,
+    minQuantity,
+    maxQuantity
   };
 }

@@ -9,23 +9,30 @@ export async function DELETE(
   try {
     const { runId } = await params;
 
-    // Find the simulation run by runId
-    const simulationRun = await prisma.simulationRun.findUnique({
+    // Find all simulation runs with this runId
+    const simulationRuns = await prisma.simulationRun.findMany({
       where: { runId },
     });
 
-    if (!simulationRun) {
+    console.log(`[DELETE /api/checkpoints/${runId}] Found ${simulationRuns.length} runs with this runId`);
+
+    if (simulationRuns.length === 0) {
       return NextResponse.json(
         { error: `Simulation run ${runId} not found` },
         { status: 404 }
       );
     }
 
-    // Update the run to set visible = false (soft delete)
-    const updatedRun = await prisma.simulationRun.update({
-      where: { id: simulationRun.id },
-      data: { visible: false },
-    });
+    // Update all runs to set visible = false (soft delete)
+    const updatePromises = simulationRuns.map(run => 
+      prisma.simulationRun.update({
+        where: { id: run.id },
+        data: { visible: false },
+      })
+    );
+    
+    await Promise.all(updatePromises);
+    console.log(`[DELETE /api/checkpoints/${runId}] Successfully hidden ${simulationRuns.length} runs`);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -46,21 +53,25 @@ export async function GET(
     const params = await context.params;
     const { runId } = params;
 
-    // Find the simulation run by runId with all its checkpoints
-    const simulationRun = await prisma.simulationRun.findUnique({
+    // Find all simulation runs with this runId
+    const simulationRuns = await prisma.simulationRun.findMany({
       where: { runId },
-      include: { checkpoints: true },
+      orderBy: { createdAt: 'desc' },
     });
 
-    if (!simulationRun) {
+    console.log(`[GET /api/checkpoints/${runId}] Found ${simulationRuns.length} runs with this runId`);
+
+    if (simulationRuns.length === 0) {
       return NextResponse.json(
         { error: `Simulation run ${runId} not found` },
         { status: 404 }
       );
     }
 
-    // Return all checkpoints for this run
-    return NextResponse.json(simulationRun.checkpoints);
+    // Return the latest run
+    console.log(`[GET /api/checkpoints/${runId}] Returning latest run with createdAt: ${simulationRuns[0].createdAt}`);
+
+    return NextResponse.json(simulationRuns);
   } catch (error) {
     console.error('Error fetching checkpoints:', error);
     return NextResponse.json(

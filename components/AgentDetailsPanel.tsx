@@ -13,20 +13,29 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
   agents,
   selectedAgentId,
   onSelectAgent,
+  metadata,
 }) => {
   const [defaultSelectedAgentId, setDefaultSelectedAgentId] = useState<string | null>(null);
   const [showSubWindow, setShowSubWindow] = useState(false);
-  const [activeTab, setActiveTab] = useState<'info' | 'actions' | 'messages'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'actions' | 'memory'>('info');
 
   useEffect(() => {
-    if (agents.length > 0 && !selectedAgentId) {
-      setDefaultSelectedAgentId(agents[0].id);
-      onSelectAgent(agents[0].id);
+    if (agents.length > 0) {
+      if (metadata?.current_agent_index !== undefined && metadata.excution_queue) {
+        const currentAgentId = metadata.excution_queue[metadata.current_agent_index];
+        if (currentAgentId && typeof currentAgentId === 'string') {
+          setDefaultSelectedAgentId(currentAgentId);
+          onSelectAgent(currentAgentId);
+        }
+      } else if (!selectedAgentId) {
+        setDefaultSelectedAgentId(agents[0].id);
+        onSelectAgent(agents[0].id);
+      }
     }
-  }, [agents, selectedAgentId, onSelectAgent]);
+  }, [agents, selectedAgentId, onSelectAgent, metadata]);
 
   const selectedAgent = agents.find(
-    (agent) => agent.id === (selectedAgentId || defaultSelectedAgentId)
+    (agent) => agent.id === (selectedAgentId || defaultSelectedAgentId || '')
   );
 
   const formatUserPrompt = (prompt: string): string => {
@@ -38,13 +47,13 @@ const AgentDetailsPanel: React.FC<AgentDetailsPanelProps> = ({
     }
   };
 
-  const promptData = selectedAgent 
-    ? `${selectedAgent?.logs?.prompts?.system_prompt}\n\n\`\`\`json
-${formatUserPrompt(selectedAgent?.logs?.prompts?.user_prompt)}
+  const promptData = selectedAgent?.logs?.prompts?.system_prompt && selectedAgent?.logs?.prompts?.user_prompt
+    ? `${selectedAgent.logs.prompts.system_prompt}\n\n\`\`\`json
+${formatUserPrompt(selectedAgent.logs.prompts.user_prompt)}
 \`\`\``
     : '';
     
-  const responseData = selectedAgent ? selectedAgent?.logs?.response : '';
+  const responseData = selectedAgent?.logs?.response || '';
 
   // Get agent type color
   const getAgentTypeColor = (type: string): string => {
@@ -171,12 +180,13 @@ ${formatUserPrompt(selectedAgent?.logs?.prompts?.user_prompt)}
         <div className="flex justify-between items-center">
           <h3 className="text-2xl font-bold">Agent Details</h3>
           <div className="w-1/2">
-            <AgentSelector
-              agents={agents}
-              selectedAgentId={selectedAgentId}
-              defaultSelectedAgentId={defaultSelectedAgentId}
-              onSelectAgent={onSelectAgent}
-            />
+            <div className="mb-4">
+              <AgentSelector
+                agents={agents}
+                selectedAgentId={selectedAgentId || defaultSelectedAgentId || ''}
+                onSelectAgent={onSelectAgent}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -246,13 +256,13 @@ ${formatUserPrompt(selectedAgent?.logs?.prompts?.user_prompt)}
               </button>
               <button
                 className={`px-5 py-3 font-medium transition-colors duration-200 ${
-                  activeTab === 'messages' 
+                  activeTab === 'memory' 
                     ? 'border-b-2 border-indigo-500 text-indigo-700 bg-white' 
                     : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-100'
                 }`}
-                onClick={() => setActiveTab('messages')}
+                onClick={() => setActiveTab('memory')}
               >
-                Messages
+                Memory
               </button>
             </div>
           </div>
@@ -334,32 +344,87 @@ ${formatUserPrompt(selectedAgent?.logs?.prompts?.user_prompt)}
                   <h4 className="font-semibold text-gray-800">Recent Actions</h4>
                 </div>
                 <div className="p-4">
-                  <RecentActions actionHistory={selectedAgent.action_history} />
+                  <RecentActions actions={selectedAgent.action_history} />
                 </div>
               </div>
             )}
 
-            {activeTab === 'messages' && (
+            {activeTab === 'memory' && (
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
                 <div className="bg-gradient-to-r from-gray-50 to-white px-4 py-3 border-b">
-                  <h4 className="font-semibold text-gray-800">Messages Received</h4>
+                  <h4 className="font-semibold text-gray-800">Agent Memory</h4>
                 </div>
                 <div className="p-4">
-                  {selectedAgent.memory && selectedAgent.memory.received_messages && selectedAgent.memory.received_messages.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-3">
-                      {selectedAgent.memory.received_messages.map((message, index) => (
-                        <div className="col-span-1">
-                          <MessageItem key={index} message={message} index={index} />
-                        </div>
-                      ))}
+                  {selectedAgent.memory ? (
+                    
+                    <div className="space-y-4">
+                      {/* Planning */}
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h5 className="text-sm font-medium text-gray-700 mb-2">Planning</h5>
+                        <p className="text-sm text-gray-600">{selectedAgent.memory.planning || 'No planning information recorded'}</p>
+                      </div>
+
+                      {/* Memory */}
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h5 className="text-sm font-medium text-gray-700 mb-2">Memory</h5>
+                        <p className="text-sm text-gray-600">{selectedAgent.memory.memory || 'No memory recorded'}</p>
+                      </div>
+
+                      {/* Observations */}
+                      {/* <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h5 className="text-sm font-medium text-gray-700 mb-2">Observations</h5>
+                        {selectedAgent.memory.observations && selectedAgent.memory.observations.length > 0 ? (
+                          <ul className="space-y-2">
+                            {selectedAgent.memory.observations.map((observation, index) => (
+                              <li key={index} className="text-sm text-gray-600">• {observation}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-sm text-gray-600">No observations recorded</p>
+                        )}
+                      </div> */}
+
+                      {/* Received Messages */}
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h5 className="text-sm font-medium text-gray-700 mb-2">Received Messages</h5>
+                        {selectedAgent.memory.received_messages && selectedAgent.memory.received_messages.length > 0 ? (
+                          <div className="space-y-3">
+                            {selectedAgent.memory.received_messages.map((message, index) => (
+                              <div key={index} className="bg-white p-3 rounded border border-gray-200">
+                                <MessageItem message={message} index={index} />
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-600">No messages received</p>
+                        )}
+                      </div>
+
+                      {/* Agent Specific Memory */}
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h5 className="text-sm font-medium text-gray-700 mb-2">Agent Specific Memory</h5>
+                        {selectedAgent.memory.agent_specific_memory && Object.keys(selectedAgent.memory.agent_specific_memory).length > 0 ? (
+                          <div className="space-y-2">
+                            {Object.entries(selectedAgent.memory.agent_specific_memory).map(([key, value]) => (
+                              <div key={key} className="bg-white p-3 rounded border border-gray-200">
+                                <span className="text-sm font-medium text-gray-700">{key}:</span>
+                                <span className="text-sm text-gray-600 ml-2">{JSON.stringify(value)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-600">No agent specific memory recorded</p>
+                        )}
+                      </div>
+
                     </div>
                   ) : (
                     <div className="text-center py-10 text-gray-500">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      <p className="text-xl font-medium">No messages received</p>
-                      <p className="mt-2 text-gray-400">This agent hasn't received any messages yet</p>
+                      <p className="text-xl font-medium">No memory data available</p>
+                      <p className="mt-2 text-gray-400">This agent doesn't have any memory data recorded</p>
                     </div>
                   )}
                 </div>

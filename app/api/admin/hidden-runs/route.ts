@@ -26,7 +26,7 @@ export async function POST(
     const { runId } = params;
 
     // Find the simulation run by runId
-    const simulationRun = await prisma.simulationRun.findUnique({
+    const simulationRun = await prisma.simulationRun.findFirst({
       where: { runId },
     });
 
